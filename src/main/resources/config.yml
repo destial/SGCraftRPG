@@ -1,0 +1,32 @@
+ignore-uppercase-emojis: false
+ignore-uppercase-emotes: false
+
+emojis:
+  ':skull:': ☠
+  ':)': ツ
+
+emotes:
+  x: "&f{name} &7doubts."
+  f: "&f{name} &7paid respects."
+  y: "&f{name} &7shamed."
+  sus: "&f{name}: &7thats kinda sus"
+
+disable-spawning:
+  armorsmith: true
+  toolsmith: false
+  weaponsmith: false
+  zombie_villager: true
+
+disable-trades:
+  - DIAMOND_HELMET
+  - DIAMOND_CHESTPLATE
+  - DIAMOND_LEGGINGS
+  - DIAMOND_BOOTS
+
+despawn-vanilla-items:
+  - DIAMOND_SWORD
+  - DIAMOND_PICKAXE
+  - DIAMOND_SHOVEL
+
+lower-damage:
+  - DIAMOND_AXE

@@ -1,0 +1,7 @@
+message:
+  balance: "&6Balance: &e{gold} gold {silver} silver {bronze} bronze"
+
+economy:
+  gold: 10000
+  silver: 100
+  bronze: 1

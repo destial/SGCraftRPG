@@ -1,0 +1,15 @@
+name: SGCraftRPG
+version: '${project.version}'
+main: xyz.destiall.sgcraftrpg.SGCraftRPG
+api-version: 1.17
+commands:
+  sgcraftrpg:
+    description: SGCraftRPG command
+  balance:
+    description: Shows your balance, RPG style
+    aliases: [ bal, money ]
+depend:
+  - PlaceholderAPI
+softdepend:
+  - CMI
+  - Vault
