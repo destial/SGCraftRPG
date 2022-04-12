@@ -4,6 +4,30 @@ ignore-uppercase-emotes: false
 emojis:
   ':skull:': ☠
   ':)': ツ
+  ':rpg:': ⨷
+  ':heart:': ❤
+  '<3': ❤
+  ':vitality:': ❤
+  ':toughness:': 🛡
+  ':strength:': 🗡
+  ':dexterity:': 🏹
+  ':mana:': ✦
+  ':spirit:': ❖
+  ':agility:': ➸
+  ':attackspeed:': ↠
+  ':critrate:': ⟴
+  ':critdmg:': ⇉
+  ':accuracy:': ↡
+  ':gem:': ⥁
+  ':aoedmg:': ⁐
+  ':dodge:': ⅏
+  ':bleed:': ∵
+  ':block:': ⟁
+  ':deflect:': ⟇
+  ':healing:': ⧾
+  ':damage:': ⚔
+  ':coin:': ●
+  ':floosh:': 🮯
 
 emotes:
   x: "&f{name} &7doubts."
@@ -17,6 +41,15 @@ disable-spawning:
   weaponsmith: false
   zombie_villager: true
 
+disable-block-interactions:
+  - ENCHANTING_TABLE
+  - LEGACY_ENCHANTMENT_TABLE
+  - ANVIL
+  - CHIPPED_ANVIL
+  - DAMAGED_ANVIL
+  - LEGACY_ANVIL
+  - GRINDSTONE
+
 disable-trades:
   - DIAMOND_HELMET
   - DIAMOND_CHESTPLATE
@@ -28,5 +61,22 @@ despawn-vanilla-items:
   - DIAMOND_PICKAXE
   - DIAMOND_SHOVEL
 
+disable-offhand:
+  - DIAMOND_SWORD
+  - IRON_SWORD
+  - NETHERITE_SWORD
+  - GOLD_SWORD
+  - WOODEN_SWORD
+  - STONE_SWORD
+  - NETHERITE_AXE
+  - DIAMOND_AXE
+  - IRON_AXE
+  - GOLD_AXE
+  - WOODEN_AXE
+  - STONE_AXE
+
 lower-damage:
   - DIAMOND_AXE
+
+luckperms-expiry-commands:
+  - /cmi nick off {player}

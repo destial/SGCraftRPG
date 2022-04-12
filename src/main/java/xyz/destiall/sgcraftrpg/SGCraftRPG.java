@@ -1,60 +1,78 @@
 package xyz.destiall.sgcraftrpg;
 
 import com.google.common.collect.Lists;
-import me.clip.placeholderapi.PlaceholderAPI;
+import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import xyz.destiall.sgcraftrpg.dungeon.DungeonManager;
 import xyz.destiall.sgcraftrpg.economy.SGCraftEconomy;
+import xyz.destiall.sgcraftrpg.listeners.ChatListener;
+import xyz.destiall.sgcraftrpg.listeners.DungeonListener;
+import xyz.destiall.sgcraftrpg.listeners.InteractListener;
 import xyz.destiall.sgcraftrpg.listeners.ItemListener;
+import xyz.destiall.sgcraftrpg.listeners.LPListener;
 import xyz.destiall.sgcraftrpg.listeners.VillagerListener;
 import xyz.destiall.sgcraftrpg.placeholder.PAPIHook;
-import xyz.destiall.sgcraftrpg.utils.Formatter;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("all")
-public final class SGCraftRPG extends JavaPlugin implements Listener {
+public final class SGCraftRPG extends JavaPlugin {
+    private static SGCraftRPG instance;
+
     public Economy ECONOMY;
+    public LuckPerms PERMISSIONS;
     private FileConfiguration econConfig;
     private SGCraftEconomy sgCraftEconomy;
     private PAPIHook papiHook;
+    private DungeonManager dungeonManager;
 
     @Override
     public void onEnable() {
+        instance = this;
         saveDefaultConfig();
-        if (!setupEconomy()) {
-            getLogger().severe("Unable to find economy provider!");
-        } else {
-            reloadConfig();
+        if (!setupPermission()) {
+            getLogger().severe("Unable to find LuckPerms provider!");
         }
-        getServer().getPluginCommand("sgcraftrpg").setExecutor(new SGCraftRPGCommand(this));
-        getServer().getPluginCommand("balance").setExecutor(new BalanceCommand(this));
-        getServer().getPluginManager().registerEvents(this, this);
-        getServer().getPluginManager().registerEvents(new VillagerListener(this), this);
-        getServer().getPluginManager().registerEvents(new ItemListener(this), this);
+        if (!setupEconomy()) {
+            getLogger().severe("Unable to find Vault provider!");
+        }
+
         papiHook = new PAPIHook(this);
+        dungeonManager = new DungeonManager(this);
         papiHook.register();
+
+        registerCommand("sgcraftrpg", new SGCraftRPGCommand(this));
+        registerCommand("balance", new BalanceCommand(this));
+
+        registerEvents(new ChatListener(this));
+        registerEvents(new VillagerListener(this));
+        registerEvents(new ItemListener(this));
+        registerEvents(new InteractListener(this));
+        registerEvents(new DungeonListener(this));
+
+        setDefaults();
     }
 
     @Override
     public void onDisable() {
-        HandlerList.unregisterAll((JavaPlugin) this);
-        getServer().getPluginCommand("sgcraftrpg").setExecutor(null);
-        getServer().getPluginCommand("balance").setExecutor(null);
+        Bukkit.getScheduler().cancelTasks(this);
+        HandlerList.unregisterAll(this);
+        registerCommand("sgcraftrpg", null);
+        registerCommand("balance", null);
         papiHook.unregister();
+        dungeonManager.disable();
     }
 
-    @Override
-    public void reloadConfig() {
+    public void setDefaults() {
         boolean save = false;
         if (!getConfig().contains("disable-spawning")) {
             getConfig().set("disable-spawning.armorsmith", true);
@@ -73,6 +91,15 @@ public final class SGCraftRPG extends JavaPlugin implements Listener {
             getConfig().set("despawn-vanilla-items", disabledTrades);
             save = true;
         }
+        if (!getConfig().contains("disable-block-interactions")) {
+            List<String> disabledBlocks = Lists.newArrayList("ENCHANTING_TABLE", "LEGACY_ENCHANTMENT_TABLE", "ANVIL", "CHIPPED_ANVIL", "DAMAGED_ANVIL", "LEGACY_ANVIL", "GRINDSTONE");
+            getConfig().set("disable-block-interactions", disabledBlocks);
+            save = true;
+        }
+        if (!getConfig().contains("luckperms-expiry-commands")) {
+            getConfig().set("luckperms-expiry-commands", Collections.singletonList("/cmi nick off {player}"));
+            save = true;
+        }
         if (save) {
             try {
                 getConfig().save(new File(getDataFolder(), "config.yml"));
@@ -80,43 +107,40 @@ public final class SGCraftRPG extends JavaPlugin implements Listener {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public void reloadConfig() {
         super.reloadConfig();
+
         File econFile = new File(getDataFolder(), "economy.yml");
         if (!econFile.exists()) saveResource("economy.yml", false);
         econConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "economy.yml"));
         sgCraftEconomy = new SGCraftEconomy(this);
+        dungeonManager.reload();
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onChat(AsyncPlayerChatEvent e) {
-        String message = e.getMessage();
-        for (String key : getConfig().getConfigurationSection("emojis").getKeys(false)) {
-            if ((getConfig().getBoolean("ignore-uppercase-emojis") && message.toLowerCase().contains(key.toLowerCase())) || message.contains(key)) {
-                message = message.replace(key, getConfig().getString("emojis." + key));
-            }
-        }
-        message = PlaceholderAPI.setPlaceholders(e.getPlayer(), message);
-        e.setMessage(message);
-        for (String key : getConfig().getConfigurationSection("emotes").getKeys(false)) {
-            if ((getConfig().getBoolean("ignore-uppercase-emotes") && message.equalsIgnoreCase(key)) || key.equals(message)) {
-                String format = getConfig().getString("emotes." + key);
-                format = Formatter.sender(format, e.getPlayer());
-                format = PlaceholderAPI.setPlaceholders(e.getPlayer(), format);
-                e.setCancelled(true);
-                getServer().broadcastMessage(format);
-                break;
-            }
-        }
+    private void registerCommand(String cmd, CommandExecutor executor) {
+        getServer().getPluginCommand(cmd).setExecutor(executor);
+    }
+
+    private void registerEvents(Listener listener) {
+        getServer().getPluginManager().registerEvents(listener, this);
+    }
+
+    private boolean setupPermission() {
+        if (getServer().getPluginManager().getPlugin("LuckPerms") == null) return false;
+        RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
+        if (provider == null) return false;
+        PERMISSIONS = provider.getProvider();
+        new LPListener(this);
+        return true;
     }
 
     private boolean setupEconomy() {
-        if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            return false;
-        }
+        if (getServer().getPluginManager().getPlugin("Vault") == null) return false;
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            return false;
-        }
+        if (rsp == null) return false;
         ECONOMY = rsp.getProvider();
         return true;
     }
@@ -127,5 +151,13 @@ public final class SGCraftRPG extends JavaPlugin implements Listener {
 
     public SGCraftEconomy getEconomy() {
         return sgCraftEconomy;
+    }
+
+    public DungeonManager getDungeonManager() {
+        return dungeonManager;
+    }
+
+    public static SGCraftRPG get() {
+        return instance;
     }
 }
