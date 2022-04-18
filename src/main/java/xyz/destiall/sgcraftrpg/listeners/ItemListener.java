@@ -26,7 +26,7 @@ public class ItemListener implements Listener {
         if (e.getWhoClicked().hasPermission(Permissions.ADMIN)) return;
         if (e.getCurrentItem() == null) return;
         ItemStack item = e.getCurrentItem();
-        if (item.hasItemMeta() && item.getItemMeta().hasLore()) return;
+        if (item == null || item.hasItemMeta() && item.getItemMeta().hasLore()) return;
         FileConfiguration config = plugin.getConfig();
         List<String> list = config.getStringList("despawn-vanilla-items");
         List<Material> disabledMaterials = list.stream().map(Material::getMaterial).collect(Collectors.toList());
@@ -65,7 +65,7 @@ public class ItemListener implements Listener {
         if (e.getWhoClicked().hasPermission(Permissions.ADMIN)) return;
         if (e.getCurrentItem() == null) return;
         ItemStack item = e.getCurrentItem();
-        if (item.hasItemMeta() && item.getItemMeta().hasLore()) return;
+        if (item == null || item.hasItemMeta() && item.getItemMeta().hasLore()) return;
         FileConfiguration config = plugin.getConfig();
         List<String> list = config.getStringList("despawn-vanilla-items");
         List<Material> disabledMaterials = list.stream().map(Material::getMaterial).collect(Collectors.toList());
