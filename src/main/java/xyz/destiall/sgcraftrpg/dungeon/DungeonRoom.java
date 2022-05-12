@@ -66,9 +66,9 @@ public class DungeonRoom {
     public void end() {
         if (party == null) return;
         SGCraftRPG.get().getLogger().info("Ending room " + dungeon.getName());
-        dungeon.putOnCooldown(party);
         party.forEachInRoom(p -> p.sendMessage(dungeon.getManager().getMessage("time-ended")));
         party.teleportBack();
+        dungeon.putOnCooldown(party);
 
         dungeon.getManager().removeInvite(invite.getId());
         party = null;

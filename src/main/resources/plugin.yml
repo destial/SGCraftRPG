@@ -10,6 +10,12 @@ commands:
     aliases: [ bal, money ]
 depend:
   - PlaceholderAPI
-softdepend:
+  - ProSkillAPI
+  - ProSkillAPIParties
+  - DamageIndicator
   - CMI
+softdepend:
   - Vault
+  - LuckPerms
+loadbefore:
+  - DiscordSRV

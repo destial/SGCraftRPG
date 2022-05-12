@@ -36,7 +36,6 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
         if (args != null && args.length != 0) {
             if (args[0].equalsIgnoreCase("reload")) {
                 if (sender.hasPermission(Permissions.ADMIN)) {
-                    plugin.setDefaults();
                     plugin.reloadConfig();
                     sender.sendMessage(Formatter.color("&aReloaded SGCraftRPG configuration..."));
                     return false;

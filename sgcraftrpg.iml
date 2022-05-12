@@ -40,6 +40,8 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains:annotations:19.0.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: net.luckperms:api:5.4" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: mc.promcteam:proskillapiparties:1.0-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: mc.promcteam:proskillapi:1.1.7.16" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.Zrips:CMI:9.1.0.6" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: com.zenya.damageindicator:dist:1.0-SNAPSHOT" level="project" />
   </component>
 </module>

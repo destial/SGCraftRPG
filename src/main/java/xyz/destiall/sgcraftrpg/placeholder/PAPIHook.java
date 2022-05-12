@@ -29,6 +29,9 @@ public class PAPIHook extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer player, String params) {
+        if (plugin.getEconomy() == null) {
+            return "0";
+        }
         double money = plugin.ECONOMY.getBalance(player);
         if (params.equalsIgnoreCase("balance")) {
             String balance = plugin.getEconConfig().getString("message.balance");

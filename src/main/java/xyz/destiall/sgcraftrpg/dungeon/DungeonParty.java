@@ -4,6 +4,7 @@ import com.sucy.party.Party;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import xyz.destiall.sgcraftrpg.SGCraftRPG;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +45,6 @@ public class DungeonParty {
     }
 
     public void teleportRoom(DungeonRoom room) {
-        inRoom.clear();
         for (String name : party.getMembers()) {
             Player player = Bukkit.getPlayer(name);
             if (player == null) continue;
@@ -79,10 +79,12 @@ public class DungeonParty {
     }
 
     public void teleportBack() {
+        SGCraftRPG.get().getLogger().info("Teleporting players " + inRoom);
         for (UUID uuid : inRoom) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null) continue;
             player.teleport(lastLocations.get(player.getUniqueId()));
         }
+        inRoom.clear();
     }
 }

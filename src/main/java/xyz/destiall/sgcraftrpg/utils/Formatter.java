@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 public class Formatter {
     private static final Pattern hexPattern = Pattern.compile("<#([A-Fa-f0-9]){6}>");
+    private static final Pattern hexBracketPattern = Pattern.compile("<#([A-Fa-f0-9]){6}}");
 
     public static String color(String s) {
         Matcher matcher = hexPattern.matcher(s);
@@ -19,6 +20,14 @@ public class Formatter {
             final String after = s.substring(matcher.end());
             s = before + hexColor + after;
             matcher = hexPattern.matcher(s);
+        }
+        matcher = hexBracketPattern.matcher(s);
+        while (matcher.find()) {
+            final ChatColor hexColor = ChatColor.of(matcher.group().substring(1, matcher.group().length() - 1));
+            final String before = s.substring(0, matcher.start());
+            final String after = s.substring(matcher.end());
+            s = before + hexColor + after;
+            matcher = hexBracketPattern.matcher(s);
         }
         return ChatColor.translateAlternateColorCodes('&', s);
     }

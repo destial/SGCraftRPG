@@ -15,25 +15,26 @@ public class ChatListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent e) {
         String message = e.getMessage();
-        for (String key : plugin.getConfig().getConfigurationSection("emojis").getKeys(false)) {
-            if ((plugin.getConfig().getBoolean("ignore-uppercase-emojis") && message.toLowerCase().contains(key.toLowerCase())) || message.contains(key)) {
-                message = message.replace(key, plugin.getConfig().getString("emojis." + key, key));
-            }
-        }
-        message = PlaceholderAPI.setPlaceholders(e.getPlayer(), message);
-        e.setMessage(message);
         for (String key : plugin.getConfig().getConfigurationSection("emotes").getKeys(false)) {
             if ((plugin.getConfig().getBoolean("ignore-uppercase-emotes") && message.equalsIgnoreCase(key)) || key.equals(message)) {
                 String format = plugin.getConfig().getString("emotes." + key);
                 format = Formatter.sender(format, e.getPlayer());
                 format = PlaceholderAPI.setPlaceholders(e.getPlayer(), format);
-                e.setCancelled(true);
                 plugin.getServer().broadcastMessage(format);
-                break;
+                e.setCancelled(true);
+                return;
             }
         }
+
+        for (String key : plugin.getConfig().getConfigurationSection("emojis").getKeys(false)) {
+            if ((plugin.getConfig().getBoolean("ignore-uppercase-emojis") && message.toLowerCase().contains(key.toLowerCase())) || message.contains(key)) {
+                String replace = plugin.getConfig().getString("emojis." + key, key);
+                message = message.replace(key, replace);
+            }
+        }
+        e.setMessage(message);
     }
 }

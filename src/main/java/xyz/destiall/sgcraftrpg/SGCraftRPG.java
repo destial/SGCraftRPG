@@ -1,6 +1,5 @@
 package xyz.destiall.sgcraftrpg;
 
-import com.google.common.collect.Lists;
 import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -14,16 +13,16 @@ import org.bukkit.plugin.java.JavaPlugin;
 import xyz.destiall.sgcraftrpg.dungeon.DungeonManager;
 import xyz.destiall.sgcraftrpg.economy.SGCraftEconomy;
 import xyz.destiall.sgcraftrpg.listeners.ChatListener;
+import xyz.destiall.sgcraftrpg.listeners.DamageListener;
 import xyz.destiall.sgcraftrpg.listeners.DungeonListener;
 import xyz.destiall.sgcraftrpg.listeners.InteractListener;
 import xyz.destiall.sgcraftrpg.listeners.ItemListener;
 import xyz.destiall.sgcraftrpg.listeners.LPListener;
 import xyz.destiall.sgcraftrpg.listeners.VillagerListener;
 import xyz.destiall.sgcraftrpg.placeholder.PAPIHook;
+import xyz.destiall.sgcraftrpg.utils.Permissions;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
 
 public final class SGCraftRPG extends JavaPlugin {
     private static SGCraftRPG instance;
@@ -48,7 +47,13 @@ public final class SGCraftRPG extends JavaPlugin {
 
         papiHook = new PAPIHook(this);
         dungeonManager = new DungeonManager(this);
+        File econFile = new File(getDataFolder(), "economy.yml");
+        if (!econFile.exists()) saveResource("economy.yml", false);
+        econConfig = YamlConfiguration.loadConfiguration(econFile);
+        sgCraftEconomy = new SGCraftEconomy(this);
+
         papiHook.register();
+        Permissions.register();
 
         registerCommand("sgcraftrpg", new SGCraftRPGCommand(this));
         registerCommand("balance", new BalanceCommand(this));
@@ -58,8 +63,7 @@ public final class SGCraftRPG extends JavaPlugin {
         registerEvents(new ItemListener(this));
         registerEvents(new InteractListener(this));
         registerEvents(new DungeonListener(this));
-
-        setDefaults();
+        registerEvents(new DamageListener(this));
     }
 
     @Override
@@ -68,45 +72,9 @@ public final class SGCraftRPG extends JavaPlugin {
         HandlerList.unregisterAll(this);
         registerCommand("sgcraftrpg", null);
         registerCommand("balance", null);
+        Permissions.unregister();
         papiHook.unregister();
         dungeonManager.disable();
-    }
-
-    public void setDefaults() {
-        boolean save = false;
-        if (!getConfig().contains("disable-spawning")) {
-            getConfig().set("disable-spawning.armorsmith", true);
-            getConfig().set("disable-spawning.toolsmith", true);
-            getConfig().set("disable-spawning.weaponsmith", true);
-            getConfig().set("disable-spawning.zombie_villager", true);
-            save = true;
-        }
-        if (!getConfig().contains("disable-trades")) {
-            List<String> disabledTrades = Lists.newArrayList("DIAMOND_HELMET", "DIAMOND_CHESTPLATE", "DIAMOND_LEGGINGS", "DIAMOND_BOOTS");
-            getConfig().set("disable-trades", disabledTrades);
-            save = true;
-        }
-        if (!getConfig().contains("despawn-vanilla-items")) {
-            List<String> disabledTrades = Lists.newArrayList("DIAMOND_SWORD", "DIAMOND_PICKAXE");
-            getConfig().set("despawn-vanilla-items", disabledTrades);
-            save = true;
-        }
-        if (!getConfig().contains("disable-block-interactions")) {
-            List<String> disabledBlocks = Lists.newArrayList("ENCHANTING_TABLE", "LEGACY_ENCHANTMENT_TABLE", "ANVIL", "CHIPPED_ANVIL", "DAMAGED_ANVIL", "LEGACY_ANVIL", "GRINDSTONE");
-            getConfig().set("disable-block-interactions", disabledBlocks);
-            save = true;
-        }
-        if (!getConfig().contains("luckperms-expiry-commands")) {
-            getConfig().set("luckperms-expiry-commands", Collections.singletonList("/cmi nick off {player}"));
-            save = true;
-        }
-        if (save) {
-            try {
-                getConfig().save(new File(getDataFolder(), "config.yml"));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     @Override
@@ -115,7 +83,7 @@ public final class SGCraftRPG extends JavaPlugin {
 
         File econFile = new File(getDataFolder(), "economy.yml");
         if (!econFile.exists()) saveResource("economy.yml", false);
-        econConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "economy.yml"));
+        econConfig = YamlConfiguration.loadConfiguration(econFile);
         sgCraftEconomy = new SGCraftEconomy(this);
         dungeonManager.reload();
     }

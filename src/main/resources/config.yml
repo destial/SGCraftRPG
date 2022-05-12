@@ -29,6 +29,16 @@ emojis:
   ':coin:': ●
   ':floosh:': 🮯
 
+emoji-hover: "&7<emoji>"
+
+chat-message-format:
+  enabled: true
+  format: "{group} {name} &7>> {color}{message}"
+  color:
+    # permission node: sgcraft.chat.[group]
+    default: "&r"
+    '100': "&c"
+
 emotes:
   x: "&f{name} &7doubts."
   f: "&f{name} &7paid respects."
@@ -65,18 +75,25 @@ disable-offhand:
   - DIAMOND_SWORD
   - IRON_SWORD
   - NETHERITE_SWORD
-  - GOLD_SWORD
+  - GOLDEN_SWORD
   - WOODEN_SWORD
   - STONE_SWORD
   - NETHERITE_AXE
   - DIAMOND_AXE
   - IRON_AXE
-  - GOLD_AXE
+  - GOLDEN_AXE
   - WOODEN_AXE
   - STONE_AXE
+  - NETHERITE_HOE
+  - DIAMOND_HOE
+  - IRON_HOE
+  - GOLDEN_HOE
+  - STONE_HOE
+  - WOODEN_HOE
 
-lower-damage:
-  - DIAMOND_AXE
+lower-damage: {}
+
+crit-format: "%original% &4-CRIT"
 
 luckperms-expiry-commands:
   - /cmi nick off {player}
