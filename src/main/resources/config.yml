@@ -39,6 +39,10 @@ chat-message-format:
     default: "&r"
     '100': "&c"
 
+damage-indicator:
+  physical: "%original%"
+  critical: "%original% &4X"
+
 emotes:
   x: "&f{name} &7doubts."
   f: "&f{name} &7paid respects."
