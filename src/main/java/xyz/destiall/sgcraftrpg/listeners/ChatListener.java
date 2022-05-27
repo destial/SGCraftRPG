@@ -15,7 +15,7 @@ public class ChatListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onChat(AsyncPlayerChatEvent e) {
         String message = e.getMessage();
         for (String key : plugin.getConfig().getConfigurationSection("emotes").getKeys(false)) {
@@ -29,12 +29,15 @@ public class ChatListener implements Listener {
             }
         }
 
-        for (String key : plugin.getConfig().getConfigurationSection("emojis").getKeys(false)) {
-            if ((plugin.getConfig().getBoolean("ignore-uppercase-emojis") && message.toLowerCase().contains(key.toLowerCase())) || message.contains(key)) {
-                String replace = plugin.getConfig().getString("emojis." + key, key);
-                message = message.replace(key, replace);
+        if (!plugin.getConfig().getBoolean("chat-message-format.enabled")) {
+            for (String key : plugin.getConfig().getConfigurationSection("emojis").getKeys(false)) {
+                if ((plugin.getConfig().getBoolean("ignore-uppercase-emojis") && message.toLowerCase().contains(key.toLowerCase())) || message.contains(key)) {
+                    String replace = plugin.getConfig().getString("emojis." + key, key);
+                    message = message.replace(key, replace);
+                }
             }
         }
+
         e.setMessage(message);
     }
 }

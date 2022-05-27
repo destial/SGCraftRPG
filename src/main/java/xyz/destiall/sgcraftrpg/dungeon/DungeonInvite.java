@@ -8,15 +8,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 public class DungeonInvite {
     private final DungeonParty party;
     private final DungeonRoom room;
-    private final Set<UUID> accepted;
-    private final Set<UUID> invited;
+    private final HashSet<UUID> accepted;
+    private final HashSet<UUID> invited;
     private final int id;
     private final long expiry;
 
@@ -33,7 +32,7 @@ public class DungeonInvite {
         return expiry < System.currentTimeMillis() && !isReady();
     }
 
-    public Set<UUID> getInvites() {
+    public HashSet<UUID> getInvites() {
         return invited;
     }
 
@@ -76,13 +75,17 @@ public class DungeonInvite {
                     func.accept(party);
                     return;
                 }
-                BaseComponent[] component = new ComponentBuilder(room.getDungeon().getManager().getMessage("start-timer").replace("{time}", ""+count)).create();
-                invited.forEach(uuid -> {
-                    Player p = Bukkit.getPlayer(uuid);
-                    if (p == null) return;
-                    p.spigot().sendMessage(component);
-                    p.playSound(p.getLocation(), Sound.BLOCK_LEVER_CLICK, 1.5f, 1);
-                });
+
+                for (String msg : room.getDungeon().getManager().getMessage("start-timer")) {
+                    BaseComponent[] component = new ComponentBuilder(msg.replace("{time}", ""+count)).create();
+                    invited.forEach(uuid -> {
+                        Player p = Bukkit.getPlayer(uuid);
+                        if (p == null) return;
+                        p.spigot().sendMessage(component);
+                        p.playSound(p.getLocation(), Sound.BLOCK_LEVER_CLICK, 1.5f, 1);
+                    });
+                }
+
                 count--;
 
             }

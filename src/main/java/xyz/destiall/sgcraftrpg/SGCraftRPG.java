@@ -1,5 +1,6 @@
 package xyz.destiall.sgcraftrpg;
 
+import com.comphenix.protocol.ProtocolLibrary;
 import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -75,6 +76,7 @@ public final class SGCraftRPG extends JavaPlugin {
         Permissions.unregister();
         papiHook.unregister();
         dungeonManager.disable();
+        ProtocolLibrary.getProtocolManager().removePacketListeners(this);
     }
 
     @Override

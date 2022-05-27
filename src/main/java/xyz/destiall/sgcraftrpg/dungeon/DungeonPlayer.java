@@ -29,9 +29,11 @@ public class DungeonPlayer {
     public void sendInvite(DungeonInvite invite) {
         DungeonManager dm = SGCraftRPG.get().getDungeonManager();
         String dungeonName = invite.getRoom().getDungeon().getName();
-        TextComponent component = new TextComponent(dm.getMessage("invite").replace("{dungeon}", dungeonName));
+
+        TextComponent component = new TextComponent(dm.getMessage("invite").get(0).replace("{dungeon}", dungeonName));
         component.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/sgcraftrpg dungeon accept " + invite.getId()));
-        TextComponent hover = new TextComponent(dm.getMessage("hover-invite").replace("{dungeon}", dungeonName));
+
+        TextComponent hover = new TextComponent(dm.getMessage("hover-invite").get(0).replace("{dungeon}", dungeonName));
         component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(hover).create()));
 
         player.spigot().sendMessage(component);

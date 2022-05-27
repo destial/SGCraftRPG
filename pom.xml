@@ -12,7 +12,7 @@
     <name>SGCraftRPG</name>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>16</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -25,6 +25,9 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <verbose>true</verbose>
+                    <fork>true</fork>
+                    <executable>C:\Program Files\Java\jdk-16.0.1\bin\javac</executable>
                 </configuration>
             </plugin>
             <plugin>
@@ -39,16 +42,6 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <relocations>
-                                <relocation>
-                                    <pattern>de.themoep.minedown</pattern>
-                                    <shadedPattern>xyz.destiall.sgcraftrpg.libraries.minedown</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>net.kyori</pattern>
-                                    <shadedPattern>xyz.destiall.sgcraftrpg.libraries.kyori</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -135,6 +128,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.comphenix.protocol</groupId>
+            <artifactId>ProtocolLib</artifactId>
+            <version>4.8.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>mc.promcteam</groupId>
             <artifactId>proskillapiparties</artifactId>
             <version>1.0-SNAPSHOT</version>
@@ -153,9 +152,33 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.Zrips</groupId>
+            <artifactId>CMILib</artifactId>
+            <version>1.1.2.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.zenya.damageindicator</groupId>
             <artifactId>dist</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.loohp</groupId>
+            <artifactId>InteractiveChat</artifactId>
+            <version>4.1.4.13</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.mrshawn</groupId>
+            <artifactId>DeathMessages</artifactId>
+            <version>1.4.13</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.lumine.xikage</groupId>
+            <artifactId>MythicMobs</artifactId>
+            <version>5.0.1</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

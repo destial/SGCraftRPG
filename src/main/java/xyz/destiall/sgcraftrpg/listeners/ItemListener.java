@@ -24,7 +24,6 @@ public class ItemListener implements Listener {
     @EventHandler
     public void onCraft(CraftItemEvent e) {
         if (e.getWhoClicked().hasPermission(Permissions.ADMIN)) return;
-        if (e.getCurrentItem() == null) return;
         ItemStack item = e.getCurrentItem();
         if (item == null || item.hasItemMeta() && item.getItemMeta().hasLore()) return;
         FileConfiguration config = plugin.getConfig();
@@ -81,6 +80,7 @@ public class ItemListener implements Listener {
         List<Material> disabledMaterials = list.stream().map(Material::getMaterial).collect(Collectors.toList());
         boolean check = false;
         for (Material m : disabledMaterials) {
+            if (m == null) continue;
             if (e.getInventory().contains(m)) {
                 check = true;
                 break;
@@ -88,7 +88,7 @@ public class ItemListener implements Listener {
         }
         if (check) {
             for (ItemStack item : e.getInventory()) {
-                if (item.hasItemMeta() && item.getItemMeta().hasLore()) continue;
+                if (item == null || (item.hasItemMeta() && item.getItemMeta().hasLore())) continue;
                 if (disabledMaterials.contains(item.getType())) {
                     item.setAmount(0);
                 }

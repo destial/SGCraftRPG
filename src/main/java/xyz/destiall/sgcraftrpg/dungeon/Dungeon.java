@@ -30,9 +30,9 @@ public class Dungeon {
             DungeonRoom room = new DungeonRoom(this, location);
             rooms.add(room);
         }
-        pCooldown = 1000L * section.getInt("player-cooldown");
-        roomTimer = 1000L * section.getInt("room-timer");
-        roomCooldown = 1000L * section.getInt("room-cooldown");
+        pCooldown = 1000L * section.getInt("player-cooldown", 60);
+        roomTimer = 1000L * section.getInt("room-timer", 120);
+        roomCooldown = 1000L * section.getInt("room-cooldown", 60);
     }
 
     public String getName() {
@@ -43,8 +43,16 @@ public class Dungeon {
         return rooms.stream().filter(r -> !r.isInUse() && r.isReadyToBeUsed()).findFirst().orElse(null);
     }
 
-    public List<DungeonRoom> getRooms() {
+    public ArrayList<DungeonRoom> getRooms() {
         return rooms;
+    }
+
+    public void putOnCooldown(UUID uuid) {
+        putOnCooldown(uuid, 1);
+    }
+
+    public void putOnCooldown(UUID uuid, int multiplier) {
+        playerCooldown.put(uuid, System.currentTimeMillis() + (pCooldown * multiplier));
     }
 
     public void putOnCooldown(DungeonParty party) {
@@ -57,18 +65,19 @@ public class Dungeon {
             room.tick();
         }
 
-        List<UUID> remove = new ArrayList<>();
         long now = System.currentTimeMillis();
-        for (Map.Entry<UUID, Long> entry : playerCooldown.entrySet()) {
-            if (entry.getValue() < now) remove.add(entry.getKey());
-        }
-        for (UUID uuid : remove) {
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                player.sendMessage(dm.getMessage("dungeon-cooldown-end").replace("{dungeon}", name));
+        playerCooldown.entrySet().removeIf(entry -> {
+            if (entry.getValue() < now) {
+                Player player = Bukkit.getPlayer(entry.getKey());
+                if (player != null) {
+                    for (String msg : dm.getMessage("dungeon-cooldown-end")) {
+                        player.sendMessage(msg.replace("{dungeon}", name));
+                    }
+                }
+                return true;
             }
-            playerCooldown.remove(uuid);
-        }
+            return false;
+        });
     }
 
     public boolean isOnCooldown(UUID uuid) {
@@ -85,7 +94,7 @@ public class Dungeon {
 
     public void clear() {
         for (DungeonRoom room : rooms) {
-            if (room.isInUse() || !room.hasTimerEnded() || !room.isReadyToBeUsed()) room.end();
+            if (room.isInUse() || !room.hasTimerEnded() || !room.isReadyToBeUsed()) room.end(0);
         }
         rooms.clear();
     }

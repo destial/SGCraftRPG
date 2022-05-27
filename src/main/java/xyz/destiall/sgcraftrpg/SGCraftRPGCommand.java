@@ -42,13 +42,13 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                 }
             } else if (args[0].equalsIgnoreCase("dungeon")) {
                 DungeonManager dm = plugin.getDungeonManager();
-                if (sender.hasPermission(Permissions.ADMIN)) {
-                    if (args.length > 2 && args[1].equalsIgnoreCase("end")) {
+                if (args.length > 2 && args[1].equalsIgnoreCase("end")) {
+                    if (sender.hasPermission(Permissions.ADMIN)) {
                         DungeonInvite invite;
                         try {
                             int id = Integer.parseInt(args[2]);
                             invite = dm.getInvite(id);
-                        } catch (Exception e) {
+                        } catch (NumberFormatException e) {
                             Player player = Bukkit.getPlayer(args[2]);
                             if (player == null) return false;
                             invite = dm.getInvite(player.getUniqueId());
@@ -57,72 +57,99 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                             sender.sendMessage(Formatter.color("&cInvite does not exist!"));
                             return false;
                         }
-                        invite.getRoom().end();
-                        return false;
+                        int delay = 0;
+                        if (args.length > 3) {
+                            try {
+                                delay = Integer.parseInt(args[3]);
+                            } catch (Exception ignored) {}
+                        }
+                        sender.sendMessage(Formatter.color("&aEnding room " + invite.getId()));
+                        invite.getRoom().end(delay);
+                    } else {
+                        sender.sendMessage(Formatter.color("&cYou don't have permission!"));
                     }
-                }
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage(Formatter.color("&cYou must be a player to use this command!"));
                     return false;
                 }
-                Player player = (Player) sender;
+
                 if (args.length > 1) {
-                    Party party = parties.getParty(player);
                     if (args[1].equalsIgnoreCase("start")) {
+                        if (sender instanceof Player) {
+                            sender.sendMessage(Formatter.color("&cYou must be from console to run this command!"));
+                            return false;
+                        }
+                        if (args.length < 3) {
+                            sender.sendMessage(Formatter.color("&4Usage: /sgcraftrpg dungeon start [dungeon] [player]"));
+                            return false;
+                        }
+                        Player player = Bukkit.getPlayer(args[3]);
+                        if (player == null) {
+                            sender.sendMessage(Formatter.color("&4Player " + args[3] + " not found!"));
+                            return false;
+                        }
+
+                        Party party = parties.getParty(player);
                         DungeonRoom existing = dm.getDungeonRoom(player);
                         if (existing != null) {
-                            player.sendMessage(dm.getMessage("already-in-room"));
+                            for (String msg : dm.getMessage("already-in-room"))
+                                player.sendMessage(msg);
                             return false;
                         }
-                        if (args.length > 2) {
-                            if (!sender.hasPermission(Permissions.SOLO)) {
-                                if (party == null) {
-                                    player.sendMessage(dm.getMessage("no-party"));
-                                    return false;
-                                }
-                            } else {
-                                if (party == null) {
-                                    party = new Party(parties, player);
-                                    parties.addParty(party);
-                                }
-                            }
-
-                            String dungeonName = args[2].toLowerCase();
-                            Dungeon dungeon = dm.getDungeon(dungeonName);
-                            if (dungeon == null) {
-                                player.sendMessage(Formatter.color("&cThat is not a dungeon name!"));
+                        if (!sender.hasPermission(Permissions.SOLO)) {
+                            if (party == null) {
+                                for (String msg : dm.getMessage("no-party"))
+                                        player.sendMessage(msg);
                                 return false;
                             }
-
-                            if (dungeon.isOnCooldown(player.getUniqueId())) {
-                                player.sendMessage(dm.getMessage("dungeon-cooldown"));
-                                return false;
+                        } else {
+                            if (party == null) {
+                                party = new Party(parties, player);
+                                parties.addParty(party);
                             }
+                        }
 
-                            if (plugin.getConfig().getBoolean("options.party-leader-only") && !party.isLeader(player)) {
-                                sender.sendMessage(dm.getMessage("party-leader-only"));
-                                return false;
-                            }
-
-                            DungeonRoom room = dungeon.getAvailableRoom();
-
-                            if (room == null) {
-                                sender.sendMessage(dm.getMessage("dungeon-full"));
-                                return false;
-                            }
-
-                            DungeonParty dungeonParty = dm.addParty(party);
-                            if (!dm.invite(dungeonParty, room)) {
-                                sender.sendMessage(dm.getMessage("already-invited"));
-                            }
+                        String dungeonName = args[2].toLowerCase();
+                        Dungeon dungeon = dm.getDungeon(dungeonName);
+                        if (dungeon == null) {
+                            sender.sendMessage(Formatter.color("&cThat is not a dungeon name!"));
                             return false;
                         }
-                        sender.sendMessage(Formatter.color("&cUsage: /sgcraftrpg dungeon start [name]"));
+
+                        if (dungeon.isOnCooldown(player.getUniqueId())) {
+                            for (String msg : dm.getMessage("dungeon-cooldown"))
+                                player.sendMessage(msg);
+                            return false;
+                        }
+
+                        if (plugin.getConfig().getBoolean("options.party-leader-only") && !party.isLeader(player)) {
+                            for (String msg : dm.getMessage("party-leader-only"))
+                                player.sendMessage(msg);
+                            return false;
+                        }
+
+                        DungeonRoom room = dungeon.getAvailableRoom();
+
+                        if (room == null) {
+                            for (String msg : dm.getMessage("dungeon-full"))
+                                player.sendMessage(msg);
+                            return false;
+                        }
+
+                        DungeonParty dungeonParty = dm.addParty(party);
+                        if (!dm.invite(dungeonParty, room)) {
+                            for (String msg : dm.getMessage("already-invited"))
+                                player.sendMessage(msg);
+                        }
                         return false;
                     } else if (args[1].equalsIgnoreCase("accept")) {
+                        if (!(sender instanceof Player)) {
+                            sender.sendMessage(Formatter.color("&cYou must be a player to run this command!"));
+                            return false;
+                        }
+                        Player player = (Player) sender;
                         DungeonRoom existing = dm.getDungeonRoom(player);
                         if (existing != null) {
-                            sender.sendMessage(dm.getMessage("already-in-room"));
+                            for (String msg : dm.getMessage("already-in-room"))
+                                sender.sendMessage(msg);
                             return false;
                         }
                         if (args.length > 2) {
@@ -133,16 +160,21 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                                     sender.sendMessage(Formatter.color("&cInvalid invite!"));
                                     return false;
                                 }
+                                Party party = parties.getParty(player);
                                 DungeonParty dungeonParty = dm.addParty(party);
                                 DungeonPlayer dungeonPlayer = new DungeonPlayer(player, dungeonParty);
                                 DungeonInvite.Result result = invite.accept(dungeonPlayer);
                                 if (result == DungeonInvite.Result.ACCEPTED) {
-                                    dungeonParty.forEach(p -> p.sendMessage(dm.getMessage("accept-invite-party").replace("{name}", player.getName())));
+                                    dungeonParty.forEach(p -> {
+                                        for (String msg : dm.getMessage("accept-invite-party"))
+                                            p.sendMessage(msg.replace("{name}", player.getName()));
+                                    });
 
                                     if (invite.isReady()) {
                                         DungeonRoom room = invite.getRoom();
                                         if (room.isInUse() || !room.isReadyToBeUsed()) {
-                                            dungeonParty.forEach(p -> p.sendMessage(dm.getMessage("room-full").replace("{dungeon}", invite.getRoom().getDungeon().getName())));
+                                            for (String msg : dm.getMessage("room-full"))
+                                                dungeonParty.forEach(p -> p.sendMessage(msg.replace("{dungeon}", invite.getRoom().getDungeon().getName())));
                                             dm.removeInvite(id);
                                             return false;
                                         }
@@ -151,13 +183,17 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                                         return false;
                                     }
                                 } else if (result == DungeonInvite.Result.ALREADY_ACCEPTED) {
-                                    sender.sendMessage(dm.getMessage("already-accepted"));
+                                    for (String msg : dm.getMessage("already-accepted"))
+                                        sender.sendMessage(msg);
                                 } else if (result == DungeonInvite.Result.NOT_INVITED) {
-                                    sender.sendMessage(dm.getMessage("not-invited"));
+                                    for (String msg : dm.getMessage("not-invited"))
+                                        sender.sendMessage(msg);
                                 } else if (result == DungeonInvite.Result.ALREADY_IN_ROOM) {
-                                    sender.sendMessage(dm.getMessage("already-in-room"));
+                                    for (String msg : dm.getMessage("already-in-room"))
+                                        sender.sendMessage(msg);
                                 } else {
-                                    sender.sendMessage(dm.getMessage("dungeon-cooldown"));
+                                    for (String msg : dm.getMessage("dungeon-cooldown"))
+                                        sender.sendMessage(msg);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
@@ -189,7 +225,7 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                 if (args[1].equalsIgnoreCase("start")) {
                     return plugin.getDungeonManager().getDungeons().stream().map(Dungeon::getName).filter(a -> a.startsWith(args[2].toLowerCase())).collect(Collectors.toList());
                 } else if (args[1].equalsIgnoreCase("end")) {
-                    return plugin.getDungeonManager().getInvites().stream().map((i) -> ""+i).filter(a -> a.startsWith(args[2].toLowerCase())).collect(Collectors.toList());
+                    return plugin.getDungeonManager().getInvites().stream().map(i -> ""+i).filter(a -> a.startsWith(args[2].toLowerCase())).collect(Collectors.toList());
                 }
             }
         }

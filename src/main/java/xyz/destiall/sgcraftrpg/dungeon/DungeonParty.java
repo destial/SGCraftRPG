@@ -8,15 +8,13 @@ import xyz.destiall.sgcraftrpg.SGCraftRPG;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 public class DungeonParty {
-    private final Map<UUID, Location> lastLocations;
-    private final Set<UUID> inRoom;
+    private final HashMap<UUID, Location> lastLocations;
+    private final HashSet<UUID> inRoom;
     private final Party party;
     public DungeonParty(Party party) {
         lastLocations = new HashMap<>();
@@ -61,12 +59,20 @@ public class DungeonParty {
         return party.getMembers().contains(player.getName());
     }
 
+    public boolean isInRoom(Player player) {
+        return inRoom.contains(player.getUniqueId());
+    }
+
     public void saveLastLocation() {
         for (String name : party.getMembers()) {
             Player player = Bukkit.getPlayer(name);
             if (player == null) continue;
             lastLocations.put(player.getUniqueId(), player.getLocation());
         }
+    }
+
+    public boolean noOneInRoom() {
+        return inRoom.isEmpty();
     }
 
     public boolean equals(DungeonParty o) {

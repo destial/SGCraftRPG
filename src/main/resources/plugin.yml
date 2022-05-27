@@ -14,8 +14,11 @@ depend:
   - ProSkillAPIParties
   - DamageIndicator
   - CMI
+  - InteractiveChat
 softdepend:
   - Vault
   - LuckPerms
+  - ProtocolLib
+  - DeathMessages
 loadbefore:
   - DiscordSRV

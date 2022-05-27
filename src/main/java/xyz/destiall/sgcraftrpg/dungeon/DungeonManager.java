@@ -12,11 +12,13 @@ import xyz.destiall.sgcraftrpg.utils.Formatter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class DungeonManager {
     private final ConcurrentHashMap<Integer, DungeonInvite> invites;
@@ -26,6 +28,7 @@ public class DungeonManager {
     private FileConfiguration config;
     private int countdown;
     private long inviteExpiry;
+    private int deathCooldownMultiplier;
 
     public DungeonManager(SGCraftRPG plugin) {
         this.plugin = plugin;
@@ -39,7 +42,10 @@ public class DungeonManager {
             }
             invites.values().removeIf(i -> {
                 if (i.isExpired()) {
-                    i.getParty().forEach(p -> p.sendMessage(getMessage("invite-expired")));
+                    i.getParty().forEach(p -> {
+                        for (String msg : getMessage("invite-expired"))
+                            p.sendMessage(msg);
+                    });
                     return true;
                 }
                 return false;
@@ -75,10 +81,12 @@ public class DungeonManager {
                 config.set("messages.already-invited", "&cYou have already sent an invite!");
                 config.set("messages.invite-expired", "&cThe dungeon invite has expired!");
                 config.set("messages.dungeon-cooldown-end", "&aYou can now enter {dungeon} again.");
+                config.set("messages.dungeon-death", "&cYou have died! You have to wait twice the cooldown length to attempt this dungeon again!");
 
                 config.set("options.countdown", 5);
                 config.set("options.invite-expiry", 30);
                 config.set("options.party-leader-only", false);
+                config.set("death-cooldown-multiplier", 2);
 
                 config.set("dungeons.dungeon1.rooms", Arrays.asList(new Location(Bukkit.getWorlds().get(0), 0, 100, 0), new Location(Bukkit.getWorlds().get(0), 100, 100, 100)));
                 config.set("dungeons.dungeon1.player-cooldown", 300);
@@ -98,6 +106,7 @@ public class DungeonManager {
 
         countdown = config.getInt("options.countdown", 5);
         inviteExpiry = 1000L * config.getInt("options.invite-expiry", 30);
+        deathCooldownMultiplier = config.getInt("options.death-cooldown-multiplier", 2);
     }
 
     public void reload() {
@@ -119,14 +128,10 @@ public class DungeonManager {
         for (DungeonInvite invite : invites.values()) {
             if (invite.getParty() == party) return false;
         }
-        List<DungeonPlayer> players = new ArrayList<>();
         int id = getRandomId();
         DungeonInvite invite = new DungeonInvite(id , party, room);
         invites.put(id, invite);
-        party.forEach(p -> players.add(new DungeonPlayer(p, party)));
-        for (DungeonPlayer p : players) {
-            p.sendInvite(invite);
-        }
+        party.forEach(p -> new DungeonPlayer(p, party).sendInvite(invite));
         return true;
     }
 
@@ -159,10 +164,12 @@ public class DungeonManager {
     }
 
     public DungeonParty addParty(Party party) {
-        DungeonParty dp = new DungeonParty(party);
-        parties.add(dp);
-
-        return parties.stream().filter(p -> p.getParty() == party).findFirst().orElse(null);
+        DungeonParty dp = parties.stream().filter(p -> p.getParty() == party).findFirst().orElse(null);
+        if (dp == null) {
+            dp = new DungeonParty(party);
+            parties.add(dp);
+        }
+        return dp;
     }
 
     public void removeParty(Party party) {
@@ -173,8 +180,15 @@ public class DungeonManager {
         return plugin;
     }
 
-    public String getMessage(String key) {
-        return Formatter.color(config.getString("messages." + key));
+    public List<String> getMessage(String key) {
+        Object object = config.get("messages." + key);
+        if (object instanceof String) {
+            return Collections.singletonList(Formatter.color((String) object));
+        } else if (object instanceof List) {
+            List<String> stringList = (List<String>) object;
+            return stringList.stream().map(Formatter::color).collect(Collectors.toList());
+        }
+        return null;
     }
 
     public int getCountdown() {
@@ -183,6 +197,14 @@ public class DungeonManager {
 
     public long getInviteExpiry() {
         return inviteExpiry;
+    }
+
+    public int getDeathCooldownMultiplier() {
+        return deathCooldownMultiplier;
+    }
+
+    public Set<Integer> getInvites() {
+        return invites.keySet();
     }
 
     public DungeonParty getDungeonParty(Player player) {
@@ -197,13 +219,9 @@ public class DungeonManager {
         return null;
     }
 
-    public Collection<Integer> getInvites() {
-        return invites.keySet();
-    }
-
     public DungeonRoom getDungeonRoom(Player player) {
         for (Dungeon dungeon : dungeons) {
-            DungeonRoom room = dungeon.getRooms().stream().filter(r -> r.isInUse() && r.getParty().contains(player)).findFirst().orElse(null);
+            DungeonRoom room = dungeon.getRooms().stream().filter(r -> r.isInUse() && r.getParty().isInRoom(player)).findFirst().orElse(null);
             if (room != null) return room;
         }
         return null;
