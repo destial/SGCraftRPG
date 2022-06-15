@@ -14,8 +14,7 @@ depend:
   - ProSkillAPIParties
   - DamageIndicator
   - CMI
-  - InteractiveChat
-softdepend:
+  - WorldGuard
   - Vault
   - LuckPerms
   - ProtocolLib

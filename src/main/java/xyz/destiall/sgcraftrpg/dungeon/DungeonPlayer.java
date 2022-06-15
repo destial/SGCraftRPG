@@ -1,5 +1,7 @@
 package xyz.destiall.sgcraftrpg.dungeon;
 
+import com.sucy.skill.SkillAPI;
+import com.sucy.skill.api.player.PlayerClass;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -16,6 +18,12 @@ public class DungeonPlayer {
     public DungeonPlayer(Player player, DungeonParty party) {
         this.player = player;
         this.party = party;
+    }
+
+    public int getLevel() {
+        PlayerClass playerClass = SkillAPI.getPlayerData(player).getMainClass();
+        if (playerClass == null) return 0;
+        return playerClass.getLevel();
     }
 
     public DungeonParty getParty() {

@@ -27,6 +27,7 @@ public class DungeonParty {
     }
 
     public void forEach(Consumer<Player> func) {
+        if (party == null) return;
         for (String name : party.getMembers()) {
             Player player = Bukkit.getPlayer(name);
             if (player == null) continue;
@@ -43,6 +44,7 @@ public class DungeonParty {
     }
 
     public void teleportRoom(DungeonRoom room) {
+        if (party == null) return;
         for (String name : party.getMembers()) {
             Player player = Bukkit.getPlayer(name);
             if (player == null) continue;
@@ -56,6 +58,7 @@ public class DungeonParty {
     }
 
     public boolean contains(Player player) {
+        if (party == null) return false;
         return party.getMembers().contains(player.getName());
     }
 
@@ -64,6 +67,7 @@ public class DungeonParty {
     }
 
     public void saveLastLocation() {
+        if (party == null) return;
         for (String name : party.getMembers()) {
             Player player = Bukkit.getPlayer(name);
             if (player == null) continue;

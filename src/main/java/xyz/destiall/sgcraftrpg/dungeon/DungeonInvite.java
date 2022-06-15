@@ -52,6 +52,7 @@ public class DungeonInvite {
         if (!invited.contains(player.getId())) return Result.NOT_INVITED;
         if (isReady()) return Result.ALREADY_IN_ROOM;
         if (room.getDungeon().isOnCooldown(player.getId())) return Result.COOLDOWN;
+        if (player.getLevel() < room.getDungeon().getLevelRequirement()) return Result.NOT_HIGH_LEVEL;
         return accepted.add(player.getId()) ? Result.ACCEPTED : Result.ALREADY_ACCEPTED;
     }
 
@@ -98,5 +99,6 @@ public class DungeonInvite {
         NOT_INVITED,
         ALREADY_IN_ROOM,
         COOLDOWN,
+        NOT_HIGH_LEVEL,
     }
 }

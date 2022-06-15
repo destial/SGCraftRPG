@@ -101,6 +101,7 @@ public class DungeonRoom {
                     p.sendMessage(msg);
             });
         }
+        SGCraftRPG.get().getLogger().info("In party: " + party.getParty().getMembers());
         dungeon.putOnCooldown(party);
         dungeon.getManager().removeInvite(invite.getId());
         party.teleportBack();

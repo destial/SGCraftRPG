@@ -1,9 +1,13 @@
 package xyz.destiall.sgcraftrpg.dungeon;
 
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.query.QueryMode;
+import net.luckperms.api.query.QueryOptions;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import xyz.destiall.sgcraftrpg.SGCraftRPG;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +23,7 @@ public class Dungeon {
     private final long pCooldown;
     private final long roomTimer;
     private final long roomCooldown;
+    private final int levelRequirement;
 
     public Dungeon(DungeonManager dm, String name, ConfigurationSection section) {
         this.dm = dm;
@@ -33,6 +38,11 @@ public class Dungeon {
         pCooldown = 1000L * section.getInt("player-cooldown", 60);
         roomTimer = 1000L * section.getInt("room-timer", 120);
         roomCooldown = 1000L * section.getInt("room-cooldown", 60);
+        levelRequirement = section.getInt("level-requirement", 1);
+    }
+
+    public int getLevelRequirement() {
+        return levelRequirement;
     }
 
     public String getName() {
@@ -47,17 +57,42 @@ public class Dungeon {
         return rooms;
     }
 
-    public void putOnCooldown(UUID uuid) {
-        putOnCooldown(uuid, 1);
-    }
-
-    public void putOnCooldown(UUID uuid, int multiplier) {
-        playerCooldown.put(uuid, System.currentTimeMillis() + (pCooldown * multiplier));
+    public void putOnCooldown(Player player, int multiplier) {
+        long cooldownTime = getCooldownTime(player);
+        playerCooldown.put(player.getUniqueId(), System.currentTimeMillis() + (cooldownTime * multiplier));
     }
 
     public void putOnCooldown(DungeonParty party) {
         long now = System.currentTimeMillis();
-        party.forEachInRoom(p -> playerCooldown.put(p.getUniqueId(), now + pCooldown));
+        party.forEachInRoom(p -> {
+            long cooldownTime = getCooldownTime(p);
+            playerCooldown.put(p.getUniqueId(), now + cooldownTime);
+        });
+    }
+
+    public long getCooldownTime(Player player) {
+        String node = "sgcraftrpg.dungeon." + getName().toLowerCase() + ".";
+        long cd = pCooldown;
+        User user = SGCraftRPG.get().PERMISSIONS.getUserManager().getUser(player.getUniqueId());
+        if (user == null) return cd;
+
+        QueryOptions options = QueryOptions.builder(QueryMode.CONTEXTUAL).context(user.getQueryOptions().context()).build();
+        Map<String, Boolean> data = user.getCachedData().getPermissionData(options).getPermissionMap();
+        int i = (int) (pCooldown / 1000);
+        for (Map.Entry<String, Boolean> entry : data.entrySet()) {
+            if (entry.getValue() && entry.getKey().startsWith(node)) {
+                try {
+                    int parse = Integer.parseInt(entry.getKey().substring(node.length()));
+                    if (parse < i) {
+                        i = parse;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        cd = i * 1000L;
+        return cd;
     }
 
     public void tick() {

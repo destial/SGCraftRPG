@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
 
 public class DungeonManager {
     private final ConcurrentHashMap<Integer, DungeonInvite> invites;
-    private final HashSet<DungeonParty> parties;
+    private final Set<DungeonParty> parties;
     private final SGCraftRPG plugin;
     private final HashSet<Dungeon> dungeons;
-    private FileConfiguration config;
+    private YamlConfiguration config;
     private int countdown;
     private long inviteExpiry;
     private int deathCooldownMultiplier;
@@ -34,7 +34,7 @@ public class DungeonManager {
         this.plugin = plugin;
         dungeons = new HashSet<>();
         invites = new ConcurrentHashMap<>();
-        parties = new HashSet<>();
+        parties = ConcurrentHashMap.newKeySet();
         load();
         plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
             for (Dungeon dungeon : dungeons) {
@@ -56,13 +56,8 @@ public class DungeonManager {
     private void load() {
         File file = new File(plugin.getDataFolder(), "dungeons.yml");
         try {
-            boolean create = false;
-            if (!file.exists()) {
-                file.createNewFile();
-                create = true;
-            }
+            boolean create = !file.exists();
             config = YamlConfiguration.loadConfiguration(file);
-
             if (create) {
                 config.set("messages.invite", "&aYou have been invited to {dungeon}! &e[Click here to accept]");
                 config.set("messages.hover-invite", "&aYou have been invited to {dungeon}!\n &eClick here");
@@ -82,6 +77,7 @@ public class DungeonManager {
                 config.set("messages.invite-expired", "&cThe dungeon invite has expired!");
                 config.set("messages.dungeon-cooldown-end", "&aYou can now enter {dungeon} again.");
                 config.set("messages.dungeon-death", "&cYou have died! You have to wait twice the cooldown length to attempt this dungeon again!");
+                config.set("messages.not-high-level", "&cYou are not at a high enough level! You need to be level {level} to enter this dungeon!");
 
                 config.set("options.countdown", 5);
                 config.set("options.invite-expiry", 30);
@@ -92,6 +88,7 @@ public class DungeonManager {
                 config.set("dungeons.dungeon1.player-cooldown", 300);
                 config.set("dungeons.dungeon1.room-timer", 30);
                 config.set("dungeons.dungeon1.room-cooldown", 180);
+                config.set("dungeons.dungeon1.level-requirement", 1);
 
                 config.save(file);
             }
@@ -111,6 +108,11 @@ public class DungeonManager {
 
     public void reload() {
         for (Dungeon dungeon : dungeons) {
+            for (DungeonRoom room : dungeon.getRooms()) {
+                if (room.isInUse()) {
+                    room.end(0);
+                }
+            }
             dungeon.clear();
         }
         dungeons.clear();
@@ -119,6 +121,13 @@ public class DungeonManager {
     }
 
     public void disable() {
+        for (Dungeon dungeon : dungeons) {
+            for (DungeonRoom room : dungeon.getRooms()) {
+                if (room.isInUse()) {
+                    room.end(0);
+                }
+            }
+        }
         dungeons.clear();
         invites.clear();
         parties.clear();

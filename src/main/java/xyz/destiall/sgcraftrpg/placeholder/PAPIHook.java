@@ -96,9 +96,12 @@ public class PAPIHook extends PlaceholderExpansion {
                         if (formatted) {
                             int mins = seconds / 60;
                             seconds -= mins * 60;
+                            int hours = mins / 60;
+                            mins -= hours * 60;
+                            String h = (hours < 10 ? "0" : "") + hours;
                             String m = (mins < 10 ? "0" : "") + mins;
                             String s = (seconds < 10 ? "0" : "") + seconds;
-                            duration = m + ":" + s;
+                            duration = h + ":" + m + ":" + s;
                         }
                         return friendlyName(e.getType()) + " " + (e.getAmplifier() + 1) + " " + duration;
                     }
@@ -131,9 +134,12 @@ public class PAPIHook extends PlaceholderExpansion {
                         if (formatted) {
                             int mins = seconds / 60;
                             seconds -= mins * 60;
+                            int hours = mins / 60;
+                            mins -= hours * 60;
+                            String h = (hours < 10 ? "0" : "") + hours;
                             String m = (mins < 10 ? "0" : "") + mins;
                             String s = (seconds < 10 ? "0" : "") + seconds;
-                            return m + ":" + s;
+                            return h + ":" + m + ":" + s;
                         }
                         return "" + (e.getDuration() / 20);
                     }

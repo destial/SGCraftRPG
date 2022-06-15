@@ -16,15 +16,14 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DungeonListener implements Listener {
-    private final DungeonManager dm;
-
     private final ConcurrentHashMap<UUID, Location> locations = new ConcurrentHashMap<>();
+    private final DungeonManager dm;
 
     public DungeonListener(SGCraftRPG plugin) {
         this.dm = plugin.getDungeonManager();
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onQuit(PlayerQuitEvent e) {
         DungeonParty party = dm.getDungeonParty(e.getPlayer());
         if (party == null) return;
@@ -52,7 +51,7 @@ public class DungeonListener implements Listener {
         e.getEntity().teleport(last);
         party.removeFromRoom(e.getEntity().getUniqueId());
 
-        room.getDungeon().putOnCooldown(e.getEntity().getUniqueId(), dm.getDeathCooldownMultiplier());
+        room.getDungeon().putOnCooldown(e.getEntity(), dm.getDeathCooldownMultiplier());
         for (String msg : dm.getMessage("dungeon-death"))
             e.getEntity().sendMessage(msg);
     }

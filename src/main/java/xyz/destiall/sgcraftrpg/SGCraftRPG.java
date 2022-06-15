@@ -20,8 +20,12 @@ import xyz.destiall.sgcraftrpg.listeners.InteractListener;
 import xyz.destiall.sgcraftrpg.listeners.ItemListener;
 import xyz.destiall.sgcraftrpg.listeners.LPListener;
 import xyz.destiall.sgcraftrpg.listeners.VillagerListener;
+import xyz.destiall.sgcraftrpg.packjail.PackJailManager;
+import xyz.destiall.sgcraftrpg.path.PathManager;
 import xyz.destiall.sgcraftrpg.placeholder.PAPIHook;
 import xyz.destiall.sgcraftrpg.utils.Permissions;
+import xyz.destiall.sgcraftrpg.wg.WGListener;
+import xyz.destiall.sgcraftrpg.wg.WGManager;
 
 import java.io.File;
 
@@ -34,10 +38,20 @@ public final class SGCraftRPG extends JavaPlugin {
     private SGCraftEconomy sgCraftEconomy;
     private PAPIHook papiHook;
     private DungeonManager dungeonManager;
+    private PackJailManager packJailManager;
+    private PathManager pathManager;
+    private WGManager wgManager;
+
+    @Override
+    public void onLoad() {
+        instance = this;
+        if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            wgManager = new WGManager(this);
+        }
+    }
 
     @Override
     public void onEnable() {
-        instance = this;
         saveDefaultConfig();
         if (!setupPermission()) {
             getLogger().severe("Unable to find LuckPerms provider!");
@@ -48,6 +62,8 @@ public final class SGCraftRPG extends JavaPlugin {
 
         papiHook = new PAPIHook(this);
         dungeonManager = new DungeonManager(this);
+        packJailManager = new PackJailManager(this);
+        pathManager = new PathManager(this);
         File econFile = new File(getDataFolder(), "economy.yml");
         if (!econFile.exists()) saveResource("economy.yml", false);
         econConfig = YamlConfiguration.loadConfiguration(econFile);
@@ -65,6 +81,10 @@ public final class SGCraftRPG extends JavaPlugin {
         registerEvents(new InteractListener(this));
         registerEvents(new DungeonListener(this));
         registerEvents(new DamageListener(this));
+        registerEvents(pathManager);
+        if (wgManager != null) {
+            registerEvents(new WGListener(wgManager));
+        }
     }
 
     @Override
@@ -76,17 +96,32 @@ public final class SGCraftRPG extends JavaPlugin {
         Permissions.unregister();
         papiHook.unregister();
         dungeonManager.disable();
+        packJailManager.disable();
+        pathManager.disable();
+        if (wgManager != null) {
+            wgManager.disable();
+        }
         ProtocolLibrary.getProtocolManager().removePacketListeners(this);
     }
 
-    @Override
-    public void reloadConfig() {
+    public void configReload() {
         super.reloadConfig();
 
         File econFile = new File(getDataFolder(), "economy.yml");
         if (!econFile.exists()) saveResource("economy.yml", false);
         econConfig = YamlConfiguration.loadConfiguration(econFile);
         sgCraftEconomy = new SGCraftEconomy(this);
+        packJailManager.reload();
+        pathManager.reload();
+
+        if (wgManager != null) {
+            wgManager.reload();
+        }
+    }
+
+    @Override
+    public void reloadConfig() {
+        configReload();
         dungeonManager.reload();
     }
 
@@ -125,6 +160,14 @@ public final class SGCraftRPG extends JavaPlugin {
 
     public DungeonManager getDungeonManager() {
         return dungeonManager;
+    }
+
+    public PackJailManager getPackJailManager() {
+        return packJailManager;
+    }
+
+    public PathManager getPathManager() {
+        return pathManager;
     }
 
     public static SGCraftRPG get() {

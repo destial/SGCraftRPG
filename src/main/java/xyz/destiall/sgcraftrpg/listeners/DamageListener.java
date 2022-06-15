@@ -29,7 +29,12 @@ public class DamageListener implements Listener {
     public void onHologram(HologramSpawnEvent e) {
         if (e.getEvent() instanceof EntityRegainHealthEvent) return;
         Pair<String, LivingEntity> classification = cache.remove(e.getEntity());
-        if (classification == null) return;
+        if (classification == null) {
+            if (Math.abs(e.getAmount()) <= 0.02) {
+                e.setCancelled(true);
+            }
+            return;
+        }
         String newFormat = plugin.getConfig().getString("damage-indicator." + classification.getKey());
         if (newFormat == null) return;
         String format = e.getFormat();
