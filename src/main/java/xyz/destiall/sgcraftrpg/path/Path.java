@@ -3,6 +3,7 @@ package xyz.destiall.sgcraftrpg.path;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -10,7 +11,6 @@ import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class Path {
@@ -20,10 +20,11 @@ public class Path {
     private Color color;
     private Location lastAddedPoint;
     private int distance;
+    private int size;
 
     public Path(String name) {
         this.name = name;
-        points = new ArrayList<>();
+        points = new ArrayList<>(100);
         color = Color.YELLOW;
         distance = 20;
     }
@@ -34,6 +35,7 @@ public class Path {
         points = new ArrayList<>();
         color = Color.YELLOW;
         distance = 20;
+        size = 2;
     }
 
     public void clear() {
@@ -54,15 +56,17 @@ public class Path {
                 points.add(new Location(Bukkit.getWorlds().get(0), 100, 100, 101));
                 color = Color.YELLOW;
                 distance = 20;
+                size = 2;
                 config.set("points", points);
                 config.set("color.red", color.getRed());
                 config.set("color.green", color.getGreen());
                 config.set("color.blue", color.getBlue());
                 config.set("distance", distance);
+                config.set("size", size);
 
                 config.save(yml);
             } else {
-                points.addAll((Collection<Location>) config.getList("points", new ArrayList<>()));
+                points.addAll((List<Location>) config.getList("points", new ArrayList<>()));
                 color = Color.fromRGB(config.getInt("color.red", 255), config.getInt("color.green", 255), config.getInt("color.blue", 255));
                 if (!points.isEmpty()) {
                     lastAddedPoint = points.get(points.size() - 1);
@@ -87,6 +91,7 @@ public class Path {
             config.set("color.green", color.getGreen());
             config.set("color.blue", color.getBlue());
             config.set("distance", distance);
+            config.set("size", size);
             config.save(yml);
         } catch (Exception e) {
             e.printStackTrace();
@@ -96,29 +101,26 @@ public class Path {
     public void addPoint(Location location) {
         if (lastAddedPoint != null) {
             if (lastAddedPoint.getBlockX() == location.getBlockX() &&
-                lastAddedPoint.getBlockY() == location.getBlockY() &&
+               (lastAddedPoint.getY() == location.getY() || lastAddedPoint.getBlockY() == location.getBlockY()) &&
                 lastAddedPoint.getBlockZ() == location.getBlockZ())
                 return;
         }
 
-        int y = location.getBlockY();
-        if (!location.getBlock().isEmpty()) {
-            y += 1;
-        }
-
         location.setX(location.getBlockX() + 0.5f);
-        location.setY(y + 0.5f);
         location.setZ(location.getBlockZ() + 0.5f);
         points.add(location);
         lastAddedPoint = location;
     }
 
     public void render(Player player) {
-        Particle.DustOptions options = new Particle.DustOptions(color, 2);
+        Particle.DustOptions options = new Particle.DustOptions(color, size);
         for (Location point : points) {
             if (point.distanceSquared(player.getLocation()) > distance * distance) continue;
-
+            point.add(0, 0.5d, 0);
             player.spawnParticle(Particle.REDSTONE, point, 1, options);
+            point.subtract(0, 0.5d, 0);
+
+            player.sendBlockChange(point, Material.LIGHT, (byte) 0);
         }
     }
 }

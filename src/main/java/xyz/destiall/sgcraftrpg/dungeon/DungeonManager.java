@@ -3,7 +3,6 @@ package xyz.destiall.sgcraftrpg.dungeon;
 import com.sucy.party.Party;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import xyz.destiall.sgcraftrpg.SGCraftRPG;
@@ -24,7 +23,7 @@ public class DungeonManager {
     private final ConcurrentHashMap<Integer, DungeonInvite> invites;
     private final Set<DungeonParty> parties;
     private final SGCraftRPG plugin;
-    private final HashSet<Dungeon> dungeons;
+    private final Set<Dungeon> dungeons;
     private YamlConfiguration config;
     private int countdown;
     private long inviteExpiry;
@@ -70,6 +69,7 @@ public class DungeonManager {
                 config.set("messages.already-in-room", "&cYou already in a dungeon!");
                 config.set("messages.start-timer", "&cStarting in {time}");
                 config.set("messages.start-message", "&aYou have {time} to complete this dungeon. Good luck!");
+                config.set("messages.time-remaining", "&aYou have {time} seconds left!");
                 config.set("messages.time-ended", "&6Your time has ended!");
                 config.set("messages.dungeon-cooldown", "&cYou have just recently entered this dungeon! Wait a while...");
                 config.set("messages.party-leader-only", "&cOnly the party leader can initiate a dungeon!");
@@ -107,26 +107,13 @@ public class DungeonManager {
     }
 
     public void reload() {
-        for (Dungeon dungeon : dungeons) {
-            for (DungeonRoom room : dungeon.getRooms()) {
-                if (room.isInUse()) {
-                    room.end(0);
-                }
-            }
-            dungeon.clear();
-        }
-        dungeons.clear();
-
+        disable();
         load();
     }
 
     public void disable() {
         for (Dungeon dungeon : dungeons) {
-            for (DungeonRoom room : dungeon.getRooms()) {
-                if (room.isInUse()) {
-                    room.end(0);
-                }
-            }
+            dungeon.clear();
         }
         dungeons.clear();
         invites.clear();
@@ -144,7 +131,7 @@ public class DungeonManager {
         return true;
     }
 
-    public HashSet<Dungeon> getDungeons() {
+    public Set<Dungeon> getDungeons() {
         return dungeons;
     }
 
@@ -197,7 +184,7 @@ public class DungeonManager {
             List<String> stringList = (List<String>) object;
             return stringList.stream().map(Formatter::color).collect(Collectors.toList());
         }
-        return null;
+        return new ArrayList<>();
     }
 
     public int getCountdown() {

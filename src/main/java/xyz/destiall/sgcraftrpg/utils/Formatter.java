@@ -2,9 +2,11 @@ package xyz.destiall.sgcraftrpg.utils;
 
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.command.CommandSender;
-import xyz.destiall.sgcraftrpg.economy.SGCraftEconomy;
+import xyz.destiall.sgcraftrpg.economy.Coin;
+import xyz.destiall.sgcraftrpg.economy.EconomyManager;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,30 +42,48 @@ public class Formatter {
         return color(s.replace(replace, arg));
     }
 
-    public static String money(String s, double balance, SGCraftEconomy economy) {
+    public static String money(double money, EconomyManager economy, boolean shortForm) {
+        StringBuilder builder = new StringBuilder();
+        for (Coin c : economy.getCoins()) {
+            double representation = c.getValue();
+            int amount = 0;
+            while (money >= representation) {
+                amount++;
+                money -= representation;
+            }
+            if (amount == 0) continue;
+            builder.append(c.getColor());
+            builder.append(amount);
+            builder.append(shortForm ? c.getShortForm() : c.getName());
+            builder.append(" ");
+        }
+        return color(builder.toString().trim());
+    }
+
+    public static String money(String s, double balance, EconomyManager economy) {
         String format = color(s);
-        for (Pair<String,Double> coin : economy.getCoins()) {
+        for (Coin coin : economy.getCoins()) {
             double representation = coin.getValue();
             int amount = 0;
             while (balance >= representation) {
                 amount++;
                 balance -= representation;
             }
-            format = variables(format, "{" + coin.getKey() + "}", "" + amount);
+            format = variables(format, "{" + coin.getTitle() + "}", "" + amount);
         }
         return format;
     }
 
-    public static Integer balance(double balance, SGCraftEconomy economy, String coin) {
-        HashMap<String, Integer> mapping = new HashMap<>();
-        for (Pair<String,Double> c : economy.getCoins()) {
+    public static Number balance(double balance, EconomyManager economy, String coin) {
+        HashMap<String, Number> mapping = new HashMap<>();
+        for (Coin c : economy.getCoins()) {
             double representation = c.getValue();
             int amount = 0;
             while (balance >= representation) {
                 amount++;
                 balance -= representation;
             }
-            mapping.put(c.getKey(), amount);
+            mapping.put(c.getTitle(), amount);
         }
         return mapping.get(coin);
     }

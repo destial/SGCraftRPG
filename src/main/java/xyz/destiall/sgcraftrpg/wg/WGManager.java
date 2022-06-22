@@ -1,12 +1,14 @@
 package xyz.destiall.sgcraftrpg.wg;
 
 import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.flags.CommandStringFlag;
+import com.sk89q.worldguard.protection.flags.DoubleFlag;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.IntegerFlag;
+import com.sk89q.worldguard.protection.flags.LocationFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.StringFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import xyz.destiall.sgcraftrpg.SGCraftRPG;
 import xyz.destiall.sgcraftrpg.utils.Formatter;
@@ -16,21 +18,23 @@ import java.io.File;
 public class WGManager {
     private final SGCraftRPG plugin;
     private final FlagRegistry registry;
-    private FileConfiguration config;
+    private YamlConfiguration config;
 
     public WGManager(SGCraftRPG plugin) {
         this.plugin = plugin;
         registry = WorldGuard.getInstance().getFlagRegistry();
 
         for (Flags f : Flags.values()) {
-            Flag<?> flag;
-            if (f.getType() == Flags.Type.STRING) {
-                flag = new StateFlag(f.getName(), false);
-            } else if (f.getType() == Flags.Type.INTEGER) {
-                flag = new IntegerFlag(f.getName());
-            } else {
-                flag = new StringFlag(f.getName());
+            Flag<?> flag = null;
+            switch (f.getType()) {
+                case STATE -> flag = new StateFlag(f.getName(), false);
+                case DOUBLE -> flag = new DoubleFlag(f.getName());
+                case STRING -> flag = new StringFlag(f.getName());
+                case COMMAND -> flag = new CommandStringFlag(f.getName());
+                case INTEGER -> flag = new IntegerFlag(f.getName());
+                case LOCATION -> flag = new LocationFlag(f.getName());
             }
+            if (flag == null) continue;
             registerFlag(flag);
         }
         load();
@@ -84,7 +88,6 @@ public class WGManager {
         ;
 
         private final Type type;
-
         private final String name;
 
         Flags(Type type) {
@@ -103,7 +106,10 @@ public class WGManager {
         enum Type {
             STATE,
             INTEGER,
-            STRING
+            STRING,
+            COMMAND,
+            DOUBLE,
+            LOCATION,
         }
     }
 }

@@ -28,6 +28,7 @@ public class DamageListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHologram(HologramSpawnEvent e) {
         if (e.getEvent() instanceof EntityRegainHealthEvent) return;
+
         Pair<String, LivingEntity> classification = cache.remove(e.getEntity());
         if (classification == null) {
             if (Math.abs(e.getAmount()) <= 0.02) {

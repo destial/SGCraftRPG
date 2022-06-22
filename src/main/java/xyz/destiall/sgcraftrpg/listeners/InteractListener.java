@@ -1,7 +1,5 @@
 package xyz.destiall.sgcraftrpg.listeners;
 
-import com.Zrips.CMI.AllListeners.PlayerListeners;
-import com.Zrips.CMI.commands.list.effect;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -20,6 +18,7 @@ import org.bukkit.potion.PotionEffectType;
 import xyz.destiall.sgcraftrpg.SGCraftRPG;
 import xyz.destiall.sgcraftrpg.path.Path;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,7 +33,7 @@ public class InteractListener implements Listener {
         deaths = new ConcurrentHashMap<>();
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onInteract(PlayerInteractEvent e) {
         if (e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         Block block = e.getClickedBlock();
@@ -54,29 +53,23 @@ public class InteractListener implements Listener {
             if (effect == null) return;
             effect.apply(e.getPlayer());
             plugin.getLogger().info("Re-applying xp boost to " + e.getPlayer().getName());
-        }, 10L);
+        }, 20L);
     }
 
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(EntityDamageEvent e) {
-        if (!(e.getEntity() instanceof Player p)) return;
-        if (e.getFinalDamage() >= p.getHealth()) {
-            for (PotionEffect effect : p.getActivePotionEffects()) {
-                if (effect.getType() == PotionEffectType.LUCK) {
-                    deaths.put(e.getEntity().getUniqueId(), effect);
-                    plugin.getLogger().info(e.getEntity().getName() + " died with xp boost");
-                }
+        if (e.getEntity() instanceof Player p) {
+            PotionEffect effect = p.getPotionEffect(PotionEffectType.LUCK);
+            if (effect != null) {
+                deaths.put(p.getUniqueId(), effect);
             }
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(PlayerDeathEvent e) {
-        for (PotionEffect effect : e.getEntity().getActivePotionEffects()) {
-            if (effect.getType() == PotionEffectType.LUCK) {
-                deaths.put(e.getEntity().getUniqueId(), effect);
-                plugin.getLogger().info(e.getEntity().getName() + " died with xp boost");
-            }
+        if (deaths.containsKey(e.getEntity().getUniqueId())) {
+            plugin.getLogger().info(e.getEntity().getName() + " died with xp boost");
         }
     }
 

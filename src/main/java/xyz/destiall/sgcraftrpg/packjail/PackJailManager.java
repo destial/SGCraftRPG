@@ -2,7 +2,6 @@ package xyz.destiall.sgcraftrpg.packjail;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import xyz.destiall.sgcraftrpg.SGCraftRPG;
@@ -17,8 +16,8 @@ public class PackJailManager {
     private final SGCraftRPG plugin;
     private final Map<UUID, Location> lastLocations;
     private Location location;
-    private FileConfiguration config;
-    private FileConfiguration database;
+    private YamlConfiguration config;
+    private YamlConfiguration database;
 
     public PackJailManager(SGCraftRPG plugin) {
         this.plugin = plugin;
@@ -30,18 +29,15 @@ public class PackJailManager {
     public void reload() {
         File file = new File(plugin.getDataFolder(), "packjail.yml");
         try {
-            boolean create = false;
-            if (!file.exists()) {
-                file.createNewFile();
-                create = true;
-            }
+            boolean create = !file.exists();
             config = YamlConfiguration.loadConfiguration(file);
 
             if (create) {
-                config.set("location", new Location(Bukkit.getWorlds().get(0), 100, 69, 100));
+                config.set("location", location = new Location(Bukkit.getWorlds().get(0), 100, 69, 100));
                 config.set("jail-message", "&cYou need to accept our resource pack in order to play!");
                 config.set("unjail-message", "&aThank you for accepting our resource pack!");
                 config.save(file);
+                return;
             }
 
             location = config.getLocation("location");

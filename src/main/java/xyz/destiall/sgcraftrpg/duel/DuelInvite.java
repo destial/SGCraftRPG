@@ -1,4 +1,4 @@
-package xyz.destiall.sgcraftrpg.dungeon;
+package xyz.destiall.sgcraftrpg.duel;
 
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
@@ -12,49 +12,27 @@ import java.util.HashSet;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class DungeonInvite {
-    private final DungeonParty party;
-    private final DungeonRoom room;
+public class DuelInvite {
+    private final DuelParty party1;
+    private final DuelParty party2;
+    private final DuelArena arena;
     private final HashSet<UUID> accepted;
     private final HashSet<UUID> invited;
     private final int id;
     private final long expiry;
 
-    public DungeonInvite(int id, DungeonParty party, DungeonRoom room) {
+    public DuelInvite(int id, DuelParty party1, DuelParty party2, DuelArena arena) {
         accepted = new HashSet<>();
         invited = new HashSet<>();
         this.id = id;
-        this.party = party;
-        this.room = room;
-        expiry = System.currentTimeMillis() + room.getDungeon().getManager().getInviteExpiry();
+        this.party1 = party1;
+        this.party2 = party2;
+        this.arena = arena;
+        expiry = System.currentTimeMillis() + arena.getManager().getInviteExpiry();
     }
 
     public boolean isExpired() {
         return expiry < System.currentTimeMillis() && !isReady();
-    }
-
-    public HashSet<UUID> getInvites() {
-        return invited;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public DungeonRoom getRoom() {
-        return room;
-    }
-
-    public DungeonParty getParty() {
-        return party;
-    }
-
-    public Result accept(DungeonPlayer player) {
-        if (!invited.contains(player.getId())) return Result.NOT_INVITED;
-        if (isReady()) return Result.ALREADY_IN_ROOM;
-        if (room.getDungeon().isOnCooldown(player.getId())) return Result.COOLDOWN;
-        if (player.getLevel() < room.getDungeon().getLevelRequirement()) return Result.NOT_HIGH_LEVEL;
-        return accepted.add(player.getId()) ? Result.ACCEPTED : Result.ALREADY_ACCEPTED;
     }
 
     public boolean isReady() {
@@ -66,19 +44,47 @@ public class DungeonInvite {
         return true;
     }
 
-    public void countdown(Consumer<DungeonParty> func) {
+    public HashSet<UUID> getInvites() {
+        return invited;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public DuelArena getArena() {
+        return arena;
+    }
+
+    public DuelParty getParty1() {
+        return party1;
+    }
+
+    public DuelParty getParty2() {
+        return party2;
+    }
+
+    public Result accept(Player player) {
+        if (!invited.contains(player.getUniqueId())) return Result.NOT_INVITED;
+        if (isReady()) return Result.ALREADY_IN_ARENA;
+        return accepted.add(player.getUniqueId()) ? Result.ACCEPTED : Result.ALREADY_ACCEPTED;
+    }
+
+    public void countdown(Consumer<DuelParty> func) {
         new BukkitRunnable() {
-            private int count = room.getDungeon().getManager().getCountdown();
+            private int count = arena.getManager().getCountdown();
             @Override
             public void run() {
                 if (count < 0) {
                     cancel();
-                    party.saveLastLocation();
-                    func.accept(party);
+                    party1.saveLastLocation();
+                    party2.saveLastLocation();
+                    func.accept(party1);
+                    func.accept(party2);
                     return;
                 }
 
-                for (String msg : room.getDungeon().getManager().getMessage("start-timer")) {
+                for (String msg : arena.getManager().getMessage("start-timer")) {
                     BaseComponent[] component = new ComponentBuilder(Formatter.variables(msg, "{time}", ""+count)).create();
                     invited.forEach(uuid -> {
                         Player p = Bukkit.getPlayer(uuid);
@@ -91,15 +97,14 @@ public class DungeonInvite {
                 count--;
 
             }
-        }.runTaskTimer(room.getDungeon().getManager().getPlugin(), 0L, 20L);
+        }.runTaskTimer(arena.getManager().getPlugin(), 0L, 20L);
     }
 
     public enum Result {
         ACCEPTED,
         ALREADY_ACCEPTED,
         NOT_INVITED,
-        ALREADY_IN_ROOM,
+        ALREADY_IN_ARENA,
         COOLDOWN,
-        NOT_HIGH_LEVEL,
     }
 }

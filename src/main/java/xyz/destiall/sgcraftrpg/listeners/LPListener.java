@@ -16,21 +16,9 @@ public class LPListener {
 
     public LPListener(SGCraftRPG plugin) {
         this.plugin = plugin;
-        plugin.PERMISSIONS.getEventBus().subscribe(plugin, UserDataRecalculateEvent.class, this::onUserEvent);
-        plugin.PERMISSIONS.getEventBus().subscribe(plugin, UserCacheLoadEvent.class, this::onUserEvent);
-        plugin.PERMISSIONS.getEventBus().subscribe(plugin, UserLoadEvent.class, this::onUserEvent);
-    }
-
-    private void onUserEvent(UserLoadEvent e) {
-        expire(e.getUser());
-    }
-
-    private void onUserEvent(UserCacheLoadEvent e) {
-        expire(e.getUser());
-    }
-
-    private void onUserEvent(UserDataRecalculateEvent e) {
-        expire(e.getUser());
+        plugin.getLuckPermsProvider().getEventBus().subscribe(plugin, UserDataRecalculateEvent.class, (e) -> expire(e.getUser()));
+        plugin.getLuckPermsProvider().getEventBus().subscribe(plugin, UserCacheLoadEvent.class, (e) -> expire(e.getUser()));
+        plugin.getLuckPermsProvider().getEventBus().subscribe(plugin, UserLoadEvent.class, (e) -> expire(e.getUser()));
     }
 
     private void expire(User user) {

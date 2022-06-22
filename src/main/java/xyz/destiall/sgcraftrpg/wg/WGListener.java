@@ -22,6 +22,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
+import xyz.destiall.sgcraftrpg.utils.Formatter;
 
 public class WGListener implements Listener {
     private final WGManager manager;
@@ -59,8 +60,7 @@ public class WGListener implements Listener {
         if (e.getPlayer().hasMetadata("NPC")) return;
         if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) return;
         ItemStack item = e.getItem();
-        if (item == null) return;
-        if (item.hasItemMeta() && item.getItemMeta().hasLore()) return;
+        if (item == null || item.hasItemMeta() && item.getItemMeta().hasLore()) return;
         QueryResult result = queryFlag(e.getPlayer().getLocation(), WGManager.Flags.NO_NORMAL_TOOLS);
 
         if (isTool(item.getType()) && result.accepted) {
@@ -84,7 +84,7 @@ public class WGListener implements Listener {
         QueryResult requirement = queryFlag(to, WGManager.Flags.LEVEL_REQUIREMENT, level);
         if (requirement.accepted) {
             e.setCancelled(true);
-            player.sendMessage(manager.getMessage(WGManager.Flags.LEVEL_REQUIREMENT).replace("{level}", ""+requirement.integer));
+            player.sendMessage(Formatter.variables(manager.getMessage(WGManager.Flags.LEVEL_REQUIREMENT), "{level}", ""+requirement.integer));
             return;
         }
         QueryResult toResult = queryFlag(to, WGManager.Flags.NO_CLASS_EXIT);
@@ -103,21 +103,21 @@ public class WGListener implements Listener {
 
     private QueryResult queryFlag(Location location, WGManager.Flags flag) {
         ApplicableRegionSet set = getRegion(location);
-        if (set == null) return new QueryResult();
-        StateFlag f = manager.getFlag(flag, StateFlag.class);
-        if (f == null) return new QueryResult();
         QueryResult result = new QueryResult();
+        if (set == null) return result;
+        StateFlag f = manager.getFlag(flag, StateFlag.class);
+        if (f == null) return result;
         result.accepted = set.queryValue(null, f) == StateFlag.State.ALLOW;
         return result;
     }
 
     private QueryResult queryFlag(Location location, WGManager.Flags flag, int integer) {
         ApplicableRegionSet set = getRegion(location);
-        if (set == null) return new QueryResult();
-        IntegerFlag f = manager.getFlag(flag, IntegerFlag.class);
-        if (f == null) return new QueryResult();
-        Integer query = set.queryValue(null, f);
         QueryResult result = new QueryResult();
+        if (set == null) return result;
+        IntegerFlag f = manager.getFlag(flag, IntegerFlag.class);
+        if (f == null) return result;
+        Integer query = set.queryValue(null, f);
         result.integer = query != null ? query : 0;
         result.accepted = integer < result.integer;
         return result;
@@ -129,8 +129,8 @@ public class WGListener implements Listener {
     }
 
     public static class QueryResult {
-        public int integer;
-        public boolean accepted;
+        public int integer = 0;
+        public boolean accepted = false;
     }
 
 }

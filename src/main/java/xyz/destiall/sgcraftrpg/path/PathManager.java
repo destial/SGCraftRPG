@@ -11,7 +11,6 @@ import xyz.destiall.sgcraftrpg.SGCraftRPG;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -72,7 +71,7 @@ public class PathManager implements Listener {
 
     public void startWalkPath(Path path, Player player) {
         walkingPath.put(player.getUniqueId(), path);
-        paths.put(path, new HashSet<>());
+        paths.put(path, ConcurrentHashMap.newKeySet());
         startRenderPath(path, player);
     }
 

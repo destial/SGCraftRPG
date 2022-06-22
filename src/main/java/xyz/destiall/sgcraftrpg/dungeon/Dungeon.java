@@ -53,7 +53,7 @@ public class Dungeon {
         return rooms.stream().filter(r -> !r.isInUse() && r.isReadyToBeUsed()).findFirst().orElse(null);
     }
 
-    public ArrayList<DungeonRoom> getRooms() {
+    public List<DungeonRoom> getRooms() {
         return rooms;
     }
 
@@ -73,7 +73,7 @@ public class Dungeon {
     public long getCooldownTime(Player player) {
         String node = "sgcraftrpg.dungeon." + getName().toLowerCase() + ".";
         long cd = pCooldown;
-        User user = SGCraftRPG.get().PERMISSIONS.getUserManager().getUser(player.getUniqueId());
+        User user = SGCraftRPG.get().getLuckPermsProvider().getUserManager().getUser(player.getUniqueId());
         if (user == null) return cd;
 
         QueryOptions options = QueryOptions.builder(QueryMode.CONTEXTUAL).context(user.getQueryOptions().context()).build();
@@ -129,8 +129,18 @@ public class Dungeon {
 
     public void clear() {
         for (DungeonRoom room : rooms) {
-            if (room.isInUse() || !room.hasTimerEnded() || !room.isReadyToBeUsed()) room.end(0);
+            if (room.isInUse() || !room.hasTimerEnded() || !room.isReadyToBeUsed())
+                room.end(0);
         }
+        for (UUID uuid : playerCooldown.keySet()) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) {
+                for (String msg : dm.getMessage("dungeon-cooldown-end")) {
+                    player.sendMessage(msg.replace("{dungeon}", name));
+                }
+            }
+        }
+        playerCooldown.clear();
         rooms.clear();
     }
 

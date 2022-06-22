@@ -30,8 +30,8 @@ class BalanceCommand implements CommandExecutor, TabExecutor {
             target = (Player) sender;
         }
         if (target != null) {
-            String balance = plugin.getEconConfig().getString("message.balance");
-            double money = plugin.ECONOMY.getBalance(target);
+            String balance = plugin.getEconomy().getConfig().getString("message.balance");
+            double money = plugin.getEconomyProvider().getBalance(target);
             sender.sendMessage(Formatter.money(balance, money, plugin.getEconomy()));
             return true;
         }

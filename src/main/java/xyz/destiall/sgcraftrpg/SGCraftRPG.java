@@ -5,16 +5,16 @@ import net.luckperms.api.LuckPerms;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import xyz.destiall.sgcraftrpg.duel.DuelManager;
 import xyz.destiall.sgcraftrpg.dungeon.DungeonManager;
-import xyz.destiall.sgcraftrpg.economy.SGCraftEconomy;
+import xyz.destiall.sgcraftrpg.economy.EconomyManager;
 import xyz.destiall.sgcraftrpg.listeners.ChatListener;
 import xyz.destiall.sgcraftrpg.listeners.DamageListener;
+import xyz.destiall.sgcraftrpg.listeners.DuelListener;
 import xyz.destiall.sgcraftrpg.listeners.DungeonListener;
 import xyz.destiall.sgcraftrpg.listeners.InteractListener;
 import xyz.destiall.sgcraftrpg.listeners.ItemListener;
@@ -27,17 +27,15 @@ import xyz.destiall.sgcraftrpg.utils.Permissions;
 import xyz.destiall.sgcraftrpg.wg.WGListener;
 import xyz.destiall.sgcraftrpg.wg.WGManager;
 
-import java.io.File;
-
 public final class SGCraftRPG extends JavaPlugin {
     private static SGCraftRPG instance;
 
-    public Economy ECONOMY;
-    public LuckPerms PERMISSIONS;
-    private FileConfiguration econConfig;
-    private SGCraftEconomy sgCraftEconomy;
+    private Economy economyProvider;
+    private LuckPerms permissionsProvider;
+    private EconomyManager sgCraftEconomy;
     private PAPIHook papiHook;
     private DungeonManager dungeonManager;
+    private DuelManager duelManager;
     private PackJailManager packJailManager;
     private PathManager pathManager;
     private WGManager wgManager;
@@ -62,14 +60,11 @@ public final class SGCraftRPG extends JavaPlugin {
 
         papiHook = new PAPIHook(this);
         dungeonManager = new DungeonManager(this);
+        duelManager = new DuelManager(this);
         packJailManager = new PackJailManager(this);
         pathManager = new PathManager(this);
-        File econFile = new File(getDataFolder(), "economy.yml");
-        if (!econFile.exists()) saveResource("economy.yml", false);
-        econConfig = YamlConfiguration.loadConfiguration(econFile);
-        sgCraftEconomy = new SGCraftEconomy(this);
+        sgCraftEconomy = new EconomyManager(this);
 
-        papiHook.register();
         Permissions.register();
 
         registerCommand("sgcraftrpg", new SGCraftRPGCommand(this));
@@ -80,6 +75,7 @@ public final class SGCraftRPG extends JavaPlugin {
         registerEvents(new ItemListener(this));
         registerEvents(new InteractListener(this));
         registerEvents(new DungeonListener(this));
+        registerEvents(new DuelListener(this));
         registerEvents(new DamageListener(this));
         registerEvents(pathManager);
         if (wgManager != null) {
@@ -98,6 +94,7 @@ public final class SGCraftRPG extends JavaPlugin {
         dungeonManager.disable();
         packJailManager.disable();
         pathManager.disable();
+        duelManager.disable();
         if (wgManager != null) {
             wgManager.disable();
         }
@@ -107,12 +104,11 @@ public final class SGCraftRPG extends JavaPlugin {
     public void configReload() {
         super.reloadConfig();
 
-        File econFile = new File(getDataFolder(), "economy.yml");
-        if (!econFile.exists()) saveResource("economy.yml", false);
-        econConfig = YamlConfiguration.loadConfiguration(econFile);
-        sgCraftEconomy = new SGCraftEconomy(this);
+
+        sgCraftEconomy.reload();
         packJailManager.reload();
         pathManager.reload();
+        duelManager.reload();
 
         if (wgManager != null) {
             wgManager.reload();
@@ -137,7 +133,7 @@ public final class SGCraftRPG extends JavaPlugin {
         if (getServer().getPluginManager().getPlugin("LuckPerms") == null) return false;
         RegisteredServiceProvider<LuckPerms> provider = getServer().getServicesManager().getRegistration(LuckPerms.class);
         if (provider == null) return false;
-        PERMISSIONS = provider.getProvider();
+        permissionsProvider = provider.getProvider();
         new LPListener(this);
         return true;
     }
@@ -146,20 +142,28 @@ public final class SGCraftRPG extends JavaPlugin {
         if (getServer().getPluginManager().getPlugin("Vault") == null) return false;
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) return false;
-        ECONOMY = rsp.getProvider();
+        economyProvider = rsp.getProvider();
         return true;
     }
 
-    public FileConfiguration getEconConfig() {
-        return econConfig;
+    public Economy getEconomyProvider() {
+        return economyProvider;
     }
 
-    public SGCraftEconomy getEconomy() {
+    public LuckPerms getLuckPermsProvider() {
+        return permissionsProvider;
+    }
+
+    public EconomyManager getEconomy() {
         return sgCraftEconomy;
     }
 
     public DungeonManager getDungeonManager() {
         return dungeonManager;
+    }
+
+    public DuelManager getDuelManager() {
+        return duelManager;
     }
 
     public PackJailManager getPackJailManager() {

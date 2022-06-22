@@ -9,6 +9,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import xyz.destiall.sgcraftrpg.duel.DuelArena;
+import xyz.destiall.sgcraftrpg.duel.DuelInvite;
+import xyz.destiall.sgcraftrpg.duel.DuelManager;
+import xyz.destiall.sgcraftrpg.duel.DuelParty;
 import xyz.destiall.sgcraftrpg.dungeon.Dungeon;
 import xyz.destiall.sgcraftrpg.dungeon.DungeonInvite;
 import xyz.destiall.sgcraftrpg.dungeon.DungeonManager;
@@ -49,6 +53,7 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(Formatter.color("&aReloaded SGCraftRPG configuration..."));
                     return false;
                 }
+            // ========================================== DUNGEON ==========================================
             } else if (args[0].equalsIgnoreCase("dungeon")) {
                 DungeonManager dm = plugin.getDungeonManager();
                 if (args.length > 2 && args[1].equalsIgnoreCase("end")) {
@@ -70,7 +75,8 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                         if (args.length > 3) {
                             try {
                                 delay = Integer.parseInt(args[3]);
-                            } catch (Exception ignored) {}
+                            } catch (Exception ignored) {
+                            }
                         }
                         sender.sendMessage(Formatter.color("&aEnding room " + invite.getId()));
                         invite.getRoom().end(delay);
@@ -87,12 +93,12 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                             return false;
                         }
                         if (args.length < 3) {
-                            sender.sendMessage(Formatter.color("&4Usage: /sgcraftrpg dungeon start [dungeon] [player]"));
+                            sender.sendMessage(Formatter.color("&cUsage: /sgcraftrpg dungeon start [dungeon] [player]"));
                             return false;
                         }
                         Player player = Bukkit.getPlayer(args[3]);
                         if (player == null) {
-                            sender.sendMessage(Formatter.color("&4Player " + args[3] + " not found!"));
+                            sender.sendMessage(Formatter.color("&cPlayer " + args[3] + " not found!"));
                             return false;
                         }
 
@@ -106,7 +112,7 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                         if (!sender.hasPermission(Permissions.SOLO)) {
                             if (party == null) {
                                 for (String msg : dm.getMessage("no-party"))
-                                        player.sendMessage(msg);
+                                    player.sendMessage(msg);
                                 return false;
                             }
                         } else {
@@ -216,6 +222,183 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(Formatter.color("&cUsage: /sgcraftrpg dungeon [start/end] [name]"));
                     return false;
                 }
+            // ========================================== DUELS ==========================================
+            } else if (args[0].equalsIgnoreCase("duel")) {
+                DuelManager dm = plugin.getDuelManager();
+                if (args.length > 2 && args[1].equalsIgnoreCase("end")) {
+                    if (sender.hasPermission(Permissions.ADMIN)) {
+                        DuelInvite invite;
+                        try {
+                            int id = Integer.parseInt(args[2]);
+                            invite = dm.getInvite(id);
+                        } catch (NumberFormatException e) {
+                            Player player = Bukkit.getPlayer(args[2]);
+                            if (player == null) return false;
+                            invite = dm.getInvite(player.getUniqueId());
+                        }
+                        if (invite == null) {
+                            sender.sendMessage(Formatter.color("&cInvite does not exist!"));
+                            return false;
+                        }
+                        int delay = 0;
+                        if (args.length > 3) {
+                            try {
+                                delay = Integer.parseInt(args[3]);
+                            } catch (Exception ignored) {}
+                        }
+                        sender.sendMessage(Formatter.color("&aEnding duel arena " + invite.getId()));
+                        invite.getArena().end(delay);
+                    } else {
+                        sender.sendMessage(Formatter.color("&cYou don't have permission!"));
+                    }
+                    return false;
+                }
+
+                if (args.length > 1) {
+                    if (args[1].equalsIgnoreCase("start")) {
+                        if (!(sender instanceof Player)) {
+                            sender.sendMessage(Formatter.color("&cYou must be a player to run this command!"));
+                            return false;
+                        }
+                        if (args.length < 3) {
+                            sender.sendMessage(Formatter.color("&cUsage: /sgcraftrpg duel start [player1]"));
+                            return false;
+                        }
+                        Player player1 = (Player) sender;
+                        Player player2 = Bukkit.getPlayer(args[2]);
+                        if (player2 == null) {
+                            sender.sendMessage(Formatter.color("&cPlayer " + args[2] + " not found!"));
+                            return false;
+                        }
+                        if (player1 == player2) {
+                            sender.sendMessage(Formatter.color("&cYou cannot invite yourself!"));
+                            return false;
+                        }
+
+                        DuelArena existing = dm.getArena(player1);
+                        if (existing != null) {
+                            for (String msg : dm.getMessage("already-in-duel"))
+                                player1.sendMessage(msg);
+                            return false;
+                        }
+                        existing = dm.getArena(player2);
+                        if (existing != null) {
+                            for (String msg : dm.getMessage("other-already-in-duel"))
+                                player1.sendMessage(msg);
+                            return false;
+                        }
+
+                        Party party1 = parties.getParty(player1);
+                        if (!sender.hasPermission(Permissions.SOLO)) {
+                            if (party1 == null) {
+                                for (String msg : dm.getMessage("no-party"))
+                                    player1.sendMessage(msg);
+                                return false;
+                            }
+                        } else {
+                            if (party1 == null) {
+                                party1 = new Party(parties, player1);
+                                parties.addParty(party1);
+                            }
+                        }
+
+                        Party party2 = parties.getParty(player2);
+                        if (!sender.hasPermission(Permissions.SOLO)) {
+                            if (party2 == null) {
+                                for (String msg : dm.getMessage("no-party"))
+                                    player2.sendMessage(msg);
+                                return false;
+                            }
+                        } else {
+                            if (party2 == null) {
+                                party2 = new Party(parties, player2);
+                                parties.addParty(party2);
+                            }
+                        }
+
+                        DuelArena arena = dm.getEmptyArena();
+                        if (arena == null) {
+                            sender.sendMessage(Formatter.color("&cNo arena is available!"));
+                            return false;
+                        }
+
+                        if (dm.getConfig().getBoolean("options.party-leader-only") && !party1.isLeader(player1)) {
+                            for (String msg : dm.getMessage("party-leader-only"))
+                                player1.sendMessage(msg);
+                            return false;
+                        }
+
+                        DuelParty duelParty1 = dm.addParty(party1);
+                        DuelParty duelParty2 = dm.addParty(party2);
+                        if (!dm.invite(duelParty1, duelParty2, arena)) {
+                            for (String msg : dm.getMessage("already-invited"))
+                                player1.sendMessage(msg);
+                        }
+                        return false;
+                    } else if (args[1].equalsIgnoreCase("accept")) {
+                        if (!(sender instanceof Player)) {
+                            sender.sendMessage(Formatter.color("&cYou must be a player to run this command!"));
+                            return false;
+                        }
+                        Player player = (Player) sender;
+                        DuelArena existing = dm.getArena(player);
+                        if (existing != null) {
+                            for (String msg : dm.getMessage("already-in-duel"))
+                                sender.sendMessage(msg);
+                            return false;
+                        }
+                        if (args.length > 2) {
+                            try {
+                                int id = Integer.parseInt(args[2]);
+                                DuelInvite invite = dm.getInvite(id);
+                                if (invite == null) {
+                                    sender.sendMessage(Formatter.color("&cInvalid invite!"));
+                                    return false;
+                                }
+                                DuelInvite.Result result = invite.accept(player);
+                                if (result == DuelInvite.Result.ACCEPTED) {
+                                    invite.getParty1().forEach(p -> {
+                                        for (String msg : dm.getMessage("accept-invite-party"))
+                                            p.sendMessage(msg.replace("{name}", player.getName()));
+                                    });
+                                    invite.getParty2().forEach(p -> {
+                                        for (String msg : dm.getMessage("accept-invite-party"))
+                                            p.sendMessage(msg.replace("{name}", player.getName()));
+                                    });
+
+                                    if (invite.isReady()) {
+                                        DuelArena room = invite.getArena();
+                                        if (room.isInUse()) {
+                                            for (String msg : dm.getMessage("arena-full")) {
+                                                invite.getParty1().forEach(p -> p.sendMessage(msg.replace("{arena}", invite.getArena().getName())));
+                                                invite.getParty2().forEach(p -> p.sendMessage(msg.replace("{arena}", invite.getArena().getName())));
+                                            }
+                                            dm.removeInvite(id);
+                                            return false;
+                                        }
+                                        room.start(invite);
+                                        return false;
+                                    }
+                                } else if (result == DuelInvite.Result.ALREADY_ACCEPTED) {
+                                    for (String msg : dm.getMessage("already-accepted"))
+                                        sender.sendMessage(msg);
+                                } else if (result == DuelInvite.Result.NOT_INVITED) {
+                                    for (String msg : dm.getMessage("not-invited"))
+                                        sender.sendMessage(msg);
+                                } else if (result == DuelInvite.Result.ALREADY_IN_ARENA) {
+                                    for (String msg : dm.getMessage("already-in-room"))
+                                        sender.sendMessage(msg);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                } else {
+                    sender.sendMessage(Formatter.color("&cUsage: /sgcraftrpg duel start [player]"));
+                    return false;
+                }
+            // ========================================== PACK ==========================================
             } else if (args[0].equalsIgnoreCase("pack")) {
                 if (!sender.hasPermission(Permissions.ADMIN)) {
                     sender.sendMessage(Formatter.color("&cYou do not have permission!"));
@@ -251,6 +434,7 @@ class SGCraftRPGCommand implements CommandExecutor, TabExecutor {
                     }
                     return false;
                 }
+            // ========================================== PATH ==========================================
             } else if (args[0].equalsIgnoreCase("path")) {
                 if (!sender.hasPermission(Permissions.ADMIN)) {
                     sender.sendMessage(Formatter.color("&cYou do not have permission!"));

@@ -28,6 +28,16 @@ public class DungeonRoom {
         if (isInUse()) {
             if (isEmptyRoom() || hasTimerEnded()) {
                 end(0);
+                return;
+            }
+            long remaining = endTime - System.currentTimeMillis();
+            int seconds = (int) (remaining / 1000L);
+            if (seconds % 20 == 0 || seconds <= 5) {
+                party.forEachInRoom(p -> {
+                    for (String msg : getDungeon().getManager().getMessage("time-remaining")) {
+                        p.sendMessage(msg.replace("{time}", ""+seconds));
+                    }
+                });
             }
         }
     }

@@ -1,4 +1,4 @@
-package xyz.destiall.sgcraftrpg.dungeon;
+package xyz.destiall.sgcraftrpg.duel;
 
 import com.sucy.party.Party;
 import org.bukkit.Bukkit;
@@ -12,11 +12,11 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class DungeonParty {
+public class DuelParty {
     private final HashMap<UUID, Location> lastLocations;
     private final HashSet<UUID> inRoom;
     private final Party party;
-    public DungeonParty(Party party) {
+    public DuelParty(Party party) {
         lastLocations = new HashMap<>();
         inRoom = new HashSet<>();
         this.party = party;
@@ -25,6 +25,7 @@ public class DungeonParty {
     public Party getParty() {
         return party;
     }
+
 
     public void forEach(Consumer<Player> func) {
         if (party == null) return;
@@ -43,13 +44,13 @@ public class DungeonParty {
         }
     }
 
-    public void teleportRoom(DungeonRoom room) {
+    public void teleportRoom(DuelArena room) {
         if (party == null) return;
         for (String name : party.getMembers()) {
             Player player = Bukkit.getPlayer(name);
             if (player == null) continue;
             inRoom.add(player.getUniqueId());
-            player.teleport(room.getSpawn());
+            player.teleport(room.getSpawn(this));
         }
     }
 
@@ -59,7 +60,6 @@ public class DungeonParty {
 
     public boolean contains(Player player) {
         if (party == null) return false;
-        if (inRoom.contains(player.getUniqueId())) return true;
         return party.getMembers().contains(player.getName());
     }
 
@@ -80,7 +80,7 @@ public class DungeonParty {
         return inRoom.isEmpty();
     }
 
-    public boolean equals(DungeonParty o) {
+    public boolean equals(DuelParty o) {
         if (this == o) return true;
         return Objects.equals(party, o.party);
     }

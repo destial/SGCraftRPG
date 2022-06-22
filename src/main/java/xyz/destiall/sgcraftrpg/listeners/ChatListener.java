@@ -15,7 +15,7 @@ public class ChatListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent e) {
         String message = e.getMessage();
         for (String key : plugin.getConfig().getConfigurationSection("emotes").getKeys(false)) {

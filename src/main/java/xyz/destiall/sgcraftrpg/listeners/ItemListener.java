@@ -37,7 +37,7 @@ public class ItemListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onCraft(CraftItemEvent e) {
         if (e.getWhoClicked().hasPermission(Permissions.ADMIN)) return;
         ItemStack item = e.getCurrentItem();
@@ -56,7 +56,7 @@ public class ItemListener implements Listener {
         if (match) e.setCurrentItem(null);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onFurnaceStartSmelt(FurnaceStartSmeltEvent e) {
         ItemStack item = e.getRecipe().getResult();
         if (item.hasItemMeta() && item.getItemMeta().hasLore()) return;
@@ -65,7 +65,7 @@ public class ItemListener implements Listener {
         if (match) e.setTotalCookTime(Integer.MAX_VALUE);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onFurnaceBurnItem(FurnaceBurnEvent e) {
         Furnace f = (Furnace) e.getBlock().getState();
         ItemStack smelting = f.getInventory().getSmelting();
@@ -86,7 +86,7 @@ public class ItemListener implements Listener {
         if (match) e.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onSwapHands(PlayerSwapHandItemsEvent e) {
         if (e.getPlayer().hasPermission(Permissions.ADMIN)) return;
         ItemStack offhand = e.getOffHandItem();
@@ -96,7 +96,7 @@ public class ItemListener implements Listener {
         if (match) e.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onClickInventory(InventoryClickEvent e) {
         if (e.getWhoClicked().hasPermission(Permissions.ADMIN)) return;
         ItemStack offhand = e.getCursor();
@@ -133,7 +133,7 @@ public class ItemListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onInventoryOpen(InventoryOpenEvent e) {
         if (e.getPlayer().hasPermission(Permissions.ADMIN)) return;
         List<String> list = plugin.getConfig().getStringList("despawn-vanilla-items");

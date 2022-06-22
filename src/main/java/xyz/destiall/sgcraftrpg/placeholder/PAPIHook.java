@@ -20,6 +20,7 @@ public class PAPIHook extends PlaceholderExpansion {
     private final SGCraftRPG plugin;
     public PAPIHook(SGCraftRPG plugin) {
         this.plugin = plugin;
+        register();
     }
 
     @Override
@@ -89,23 +90,23 @@ public class PAPIHook extends PlaceholderExpansion {
             }
 
             if (type != null) {
-                for (PotionEffect e : ((Player) player).getActivePotionEffects()) {
-                    if (e.getType() == type) {
-                        int seconds = e.getDuration() / 20;
-                        String duration = "" + seconds;
-                        if (formatted) {
-                            int mins = seconds / 60;
-                            seconds -= mins * 60;
-                            int hours = mins / 60;
-                            mins -= hours * 60;
-                            String h = (hours < 10 ? "0" : "") + hours;
-                            String m = (mins < 10 ? "0" : "") + mins;
-                            String s = (seconds < 10 ? "0" : "") + seconds;
-                            duration = h + ":" + m + ":" + s;
-                        }
-                        return friendlyName(e.getType()) + " " + (e.getAmplifier() + 1) + " " + duration;
+                PotionEffect e = ((Player) player).getPotionEffect(type);
+                if (e != null) {
+                    int seconds = e.getDuration() / 20;
+                    String duration = "" + seconds;
+                    if (formatted) {
+                        int mins = seconds / 60;
+                        seconds -= mins * 60;
+                        int hours = mins / 60;
+                        mins -= hours * 60;
+                        String h = (hours < 10 ? "0" : "") + hours;
+                        String m = (mins < 10 ? "0" : "") + mins;
+                        String s = (seconds < 10 ? "0" : "") + seconds;
+                        duration = h + ":" + m + ":" + s;
                     }
+                    return friendlyName(e.getType()) + " " + (e.getAmplifier() + 1) + " " + duration;
                 }
+
             }
             return "";
         }
@@ -128,21 +129,20 @@ public class PAPIHook extends PlaceholderExpansion {
             }
 
             if (type != null) {
-                for (PotionEffect e : ((Player) player).getActivePotionEffects()) {
-                    if (e.getType() == type) {
-                        int seconds = e.getDuration() / 20;
-                        if (formatted) {
-                            int mins = seconds / 60;
-                            seconds -= mins * 60;
-                            int hours = mins / 60;
-                            mins -= hours * 60;
-                            String h = (hours < 10 ? "0" : "") + hours;
-                            String m = (mins < 10 ? "0" : "") + mins;
-                            String s = (seconds < 10 ? "0" : "") + seconds;
-                            return h + ":" + m + ":" + s;
-                        }
-                        return "" + (e.getDuration() / 20);
+                PotionEffect e = ((Player) player).getPotionEffect(type);
+                if (e != null) {
+                    int seconds = e.getDuration() / 20;
+                    if (formatted) {
+                        int mins = seconds / 60;
+                        seconds -= mins * 60;
+                        int hours = mins / 60;
+                        mins -= hours * 60;
+                        String h = (hours < 10 ? "0" : "") + hours;
+                        String m = (mins < 10 ? "0" : "") + mins;
+                        String s = (seconds < 10 ? "0" : "") + seconds;
+                        return h + ":" + m + ":" + s;
                     }
+                    return "" + (e.getDuration() / 20);
                 }
             }
             return "0";
@@ -178,12 +178,17 @@ public class PAPIHook extends PlaceholderExpansion {
             return "0";
         }
 
-        double money = plugin.ECONOMY.getBalance(player);
+        double money = plugin.getEconomyProvider().getBalance(player);
         if (params.equalsIgnoreCase("balance")) {
-            String balance = plugin.getEconConfig().getString("message.balance");
+            String balance = plugin.getEconomy().getConfig().getString("message.balance");
             return Formatter.money(balance, money, plugin.getEconomy());
         }
-        Integer coins = Formatter.balance(money, plugin.getEconomy(), params);
+        try {
+            double price = Double.parseDouble(params);
+            return Formatter.money(price, plugin.getEconomy(), true);
+        } catch (Exception ignored) {}
+
+        Number coins = Formatter.balance(money, plugin.getEconomy(), params);
         if (coins != null) return "" + coins;
         return "0";
     }
